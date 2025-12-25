@@ -126,7 +126,7 @@ function startAP(size = 0){
         
         
         client
-        .login(hostport, name, "Picross", {password: password})
+        .login(hostport, name, "Nonogram", {password: password})
             .then(() => {
                 console.log("Connected to the server");
             })
@@ -164,16 +164,22 @@ function startAP(size = 0){
         console.log(items)
         for (let i = 0; i < items.length; i++) {
             let item = items[i][0];
-            if (item == "Picross clues") {
+            if (item == "Nonogram clues") {
                 gotClue();
             }
         }
     }
 
     function gotClue(){
-        console.log("Received a Picross clue! Total clues: ", nclues);
+        console.log("Received a Nonogram clue! Total clues: ", nclues);
         applyUnlocksForScore(nclues);
         nclues += 1;
+        const inLogic = (() => {
+            const obj = window.unlock_order || {};
+            const keys = Object.keys(obj);
+            return keys[Math.min(nclues, keys.length - 1)];
+        })();
+        document.getElementById('inLogicCount').innerText = inLogic !== undefined ? inLogic : '—';
     }
 
     const connectedListener = (packet) => {

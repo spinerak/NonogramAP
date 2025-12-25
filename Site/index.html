@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" /><link rel="stylesheet" href="./style.css">
 
 
-<title>Picross</title>
+<title>Nonogram</title>
 
 </head>
 <body>
@@ -13,7 +13,7 @@
 <div class="app" id="app">
     <div class="card" id="appCard">
         <div class="controls">
-            <div class="title">Picross</div>
+            <div class="title">Nonogram</div>
 
             <div class="mode-row" role="group" aria-label="modes">
                 <button id="modeFill" class="btn active" title="Black cells (filled)">Black</button>
@@ -32,6 +32,7 @@
             <!-- NEW: correct count display -->
             <div class="legend">Correct: <span id="correctCount">—</span></div>
             <div class="legend">Next unlock: <span id="nextUnlockCount">—</span></div>
+            <div class="legend">In logic: <span id="inLogicCount">—</span></div>
             <div class="legend">Puzzle: <span id="labelMode"></span> <a id="puzzleName" class="puzzle-link" style="color:#afb2b7;text-decoration:underline;">—</a></div>
 
         </div>
@@ -48,7 +49,7 @@
 <div class="login-container" id="login-container">
     <div class="login-form">
         <!-- Title with Yacht Dice - Login -->
-        <h2 class="login-heading">Picross - Login</h2>
+        <h2 class="login-heading">Nonogram - Login</h2>
 
         <br>
         <div>
@@ -82,7 +83,8 @@
       <li>Controls: left-click and right-click. Middle-click to remove. Or use the modes top-left.</li>
       <li>Some clues are hidden. A <code>?</code> means there will be a clue there at some point, and it will be a number that is at least 1. Use this to logically finish the game.</li>
       <li>You don't have to guess in this puzzle, so please don't :)</li>
-      <li>Really stuck? Check the console (F12) and there is a link to a spoiler log.</li>
+      <li>You can solve all puzzles by just looking at each row and column individually.</li>
+      <li>Stuck? Check the console (F12) and there is a link to a spoiler log near the top that shows you the steps.</li>
     </ul>
   </div>
 </div>
