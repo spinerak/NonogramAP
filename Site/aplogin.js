@@ -52,6 +52,7 @@ document.getElementById('offline10').addEventListener('click', function() {
     startAP(10);
 });
 
+
 let nclues = 0;
 function startAP(size = 0){
     console.log("Starting AP login...");
@@ -70,8 +71,9 @@ function startAP(size = 0){
         if(window.solo){
             function startWithPuzzle(puzzle_name){
                 window.chosenPuzzle = puzzle_name;
+                window.checked_locations = [];
                 console.log("Chosen offline puzzle:", chosenPuzzle);
-                window.startEverything(window.chosenPuzzle);
+                window.startEverything(window.chosenPuzzle, []);
                 document.getElementById("login-container").style.display = "none";
                 document.getElementById("app").style.display = "flex";
                 window.is_connected = true;
@@ -123,6 +125,7 @@ function startAP(size = 0){
         client.items.on("itemsReceived", receiveditemsListener);
         client.socket.on("connected", connectedListener);
         client.socket.on("disconnected", disconnectedListener);
+        client.room.on("roomUpdate", roomupdateListener);
         
         
         client
@@ -161,7 +164,6 @@ function startAP(size = 0){
     }
 
     function openItems(items) {
-        console.log(items)
         for (let i = 0; i < items.length; i++) {
             let item = items[i][0];
             if (item == "Nonogram clues") {
@@ -171,7 +173,6 @@ function startAP(size = 0){
     }
 
     function gotClue(){
-        console.log("Received a Nonogram clue! Total clues: ", nclues);
         applyUnlocksForScore(nclues);
         nclues += 1;
         const inLogic = (() => {
@@ -204,6 +205,7 @@ function startAP(size = 0){
 
         document.getElementById('labelMode').textContent = "AP";
         
+        window.checked_locations = packet.checked_locations || [];
         window.startEverything(puzzle_name);
 
         window.is_connected = true;
@@ -223,11 +225,23 @@ function startAP(size = 0){
         apstatus = "AP: Disconnected. Progress saved, please refresh.";
         alert("Disconnected from the server. Please refresh.");
         window.removeEventListener("beforeunload", window.beforeUnloadHandler);
+        document.getElementById('nextUnlockCount').innerText = 'DISCONNECTED -> REFRESH';
+    };
+
+    const roomupdateListener = (packet) => {
+        console.log(packet);
+        if(packet.checked_locations){
+            window.checked_locations += packet.checked_locations;
+            console.log("Updated checked locations:", window.checked_locations);
+        }
+        window.updateNextUnlockCount();
     };
 
     var highScore = 0
     function findAndDetermineChecks(total){
         sendCheck(67 + total);
+        window.checked_locations.push(67 + total);
+        window.updateNextUnlockCount();
     }
     window.findAndDetermineChecks = findAndDetermineChecks;
 
@@ -252,6 +266,6 @@ function startAP(size = 0){
     window.sendCheck = sendCheck;
     window.sendGoal = sendGoal;
 
-    console.log("0.0.1")
+    console.log("0.0.2")
     connectToServer();
 }

@@ -1,58 +1,47 @@
 
-function startEverything(pathToPuzzle){
+function startEverything(pathToPuzzle) {
 
-    let top_clues, left_clues, solution;
-    (function(){
-        try{
-            // synchronous XHR so rest of script can rely on CLUES immediately
-            const req = new XMLHttpRequest();
-            req.open('GET', 'puzzles/' + pathToPuzzle, false);
-            req.overrideMimeType('application/json');
-            req.send(null);
-            const ok = (req.status === 200) || (req.status === 0 && req.responseText);
-            if(!ok) throw new Error('puzzle not loaded');
-            const data = JSON.parse(req.responseText || '{}');
-
-            // accept multiple possible key styles
-            top_clues = data.T || [];
-            left_clues = data.L || [];
-            solution = data.S || [];
-            // unlock/giveaway may be named "give_away" in your example
-            window.unlock_order = data.G || {};
-            console.log('Loaded puzzle', top_clues, left_clues, solution, window.unlock_order);
-        }catch(e){
-            console.warn('Failed to load puzzle, using embedded fallback clues:', e);
-            top_clues = top_clues || [];
-            left_clues = left_clues || [];
-            solution = solution || [];
-            window.unlock_order = window.unlock_order || null;
-        }
-    })();
-
-    // set initial next-unlock display safely (window.unlock_order may be null or an object, not have .keys())
-    (function(){
-        let nextCnt = '—';
-        if(window.unlock_order && typeof window.unlock_order === 'object'){
-            const keys = Object.keys(window.unlock_order)
-                .map(k=>Number(k))
-                .filter(k=>!isNaN(k))
-                .sort((a,b)=>a-b);
-            if(keys.length) nextCnt = String(keys[1]);
-        }
-        document.getElementById('nextUnlockCount').innerText = nextCnt;
-
-    })();
-
-    const CLUES = [
-        top_clues || [],
-        left_clues || []
-    ];
-
+    
     // Derived sizes
-    const topClues = CLUES[0];
-    const leftClues = CLUES[1];
-    const COLS = topClues.length;
-    const ROWS = leftClues.length;
+    let topClues;
+    let leftClues;
+    let COLS;
+    let ROWS;
+
+    let solution;
+    let highScore = -1; // start -1 so score 0 counts as a new high score the first time
+    
+    const correctCountEl = document.getElementById('correctCount');
+    const nextUnlockCountEl = document.getElementById('nextUnlockCount');
+    const inLogicCountEl = document.getElementById('inLogicCount');
+
+
+
+    (function(){
+        // synchronous XHR so rest of script can rely on CLUES immediately
+        const req = new XMLHttpRequest();
+        req.open('GET', 'puzzles/' + pathToPuzzle, false);
+        req.overrideMimeType('application/json');
+        req.send(null);
+        const ok = (req.status === 200) || (req.status === 0 && req.responseText);
+        if(!ok) throw new Error('puzzle not loaded');
+        const data = JSON.parse(req.responseText || '{}');
+
+        // accept multiple possible key styles
+        topClues = data.T || [];
+        leftClues = data.L || [];
+        COLS = topClues.length;
+        ROWS = leftClues.length;
+        solution = data.S || [];
+        // unlock/giveaway may be named "give_away" in your example
+        window.unlock_order = data.G || {};
+
+        updateNextUnlockCount();
+        
+        console.log('Loaded puzzle', topClues, leftClues, solution, window.unlock_order);
+
+    })();
+
 
     /* UI elements */
     const boardGrid = document.getElementById('boardGrid');
@@ -61,9 +50,6 @@ function startEverything(pathToPuzzle){
     const btnErase = document.getElementById('modeErase'); // Erase
     const modeLabel = document.getElementById('modeLabel');
     const resetBtn = document.getElementById('resetBtn');
-    const correctCountEl = document.getElementById('correctCount');
-    const nextUnlockCountEl = document.getElementById('nextUnlockCount');
-    const inLogicCountEl = document.getElementById('inLogicCount');
 
     let maxTopRows = Math.max(0, ...topClues.map(a=>a.length));
     let maxLeftNumbers = Math.max(0, ...leftClues.map(a=>a.length));
@@ -380,7 +366,6 @@ function startEverything(pathToPuzzle){
         - OR it's marked (state===3) and the solution for that position is falsy (0/undefined)
     If solution missing or size mismatch we show "—".
     */
-    let highScore = -1; // start -1 so score 0 counts as a new high score the first time
     function updateCorrectCount(){
         if(!solution || !Array.isArray(solution) || solution.length !== ROWS){
             correctCountEl.textContent = '—';
@@ -389,6 +374,7 @@ function startEverything(pathToPuzzle){
             return;
         }
         let correct = 0;
+
         for(let r=0;r<ROWS;r++){
             const solRow = solution[r] || new Array(COLS).fill(0);
             for(let c=0;c<COLS;c++){
@@ -397,12 +383,11 @@ function startEverything(pathToPuzzle){
                 if(sol === st) correct++;
             }
         }
+        
 
         // track high score and apply unlocks when a new high is reached
         if(correct > highScore){
             highScore = correct;
-            // console.log('New high score:', highScore);
-            // lookup score in unlock order and unlock hints
             if(window.is_connected && window.unlock_order){
                 // if highscore is one of the keys in window.unlock_order, find the how many'th that is,
                 // then call findAndDetermineChecks with that index
@@ -411,9 +396,7 @@ function startEverything(pathToPuzzle){
                 if(scores.includes(highScore)){
                     const index = scores.indexOf(highScore);
                     window.findAndDetermineChecks(index);
-                    console.log('Applying unlocks for score', highScore);
-                    document.getElementById('nextUnlockCount').innerText = scores[index + 1] !== undefined ? scores[index + 1] : '—';
-
+                    
                     if(highScore === scores[scores.length - 1]){
                         window.sendGoal();
                     }
@@ -422,6 +405,18 @@ function startEverything(pathToPuzzle){
         }
         correctCountEl.textContent = correct + ' / ' + (ROWS * COLS);
     }
+
+    function updateNextUnlockCount(){
+        const arr = window.checked_locations || [];
+        const seen = new Set(arr.filter(n => !isNaN(n)));
+        let missing = 68;
+        while(seen.has(missing)) missing++;
+        const X = missing - 67; // 1-based
+        const keys = Object.keys(window.unlock_order).map(Number).filter(k => !isNaN(k)).sort((a,b) => a - b);
+        best_correct = (keys[X] !== undefined) ? keys[X] : 'done!';
+        nextUnlockCountEl.textContent = best_correct;
+    }
+    window.updateNextUnlockCount = updateNextUnlockCount;
 
     /* Pointer handlers */
     function onPointerDown(ev){
@@ -536,15 +531,8 @@ function startEverything(pathToPuzzle){
             cells = new Array(ROWS).fill(0).map(()=>new Array(COLS).fill(0));
             for(let c=0;c<topDone.length;c++) for(let i=0;i<topDone[c].length;i++) topDone[c][i] = false;
             for(let r=0;r<leftDone.length;r++) for(let i=0;i<leftDone[r].length;i++) leftDone[r][i] = false;
-            // also hide all reveals again
-            for(let c=0;c<topRevealed.length;c++) for(let i=0;i<topRevealed[c].length;i++) topRevealed[c][i] = false;
-            for(let r=0;r<leftRevealed.length;r++) for(let i=0;i<leftRevealed[r].length;i++) leftRevealed[r][i] = false;
-            highScore = -1; // reset high score so score 0 will re-unlock if defined
-            // rebuild board so DOM is consistent
+            
             buildBoardGrid();
-            // apply unlocks for score 0 if any (treat new game as unlocking score 0)
-            applyUnlocksForScore(0);
-            updateCorrectCount();
         }
     });
 
