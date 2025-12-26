@@ -23,13 +23,12 @@ def make_lists_of_puzzles():
     directory = Path(args.dir)
     try:
         files = list_json_or_txt_files(directory)
-        print(files)
     except FileNotFoundError as e:
         print(e, file=sys.stderr)
         sys.exit(1)
         
     filters = [5, 10]
-    paths = ["ArchipelagoPicross\\ArchipelagoPicross\\worlds\\picross\\data", "Site\\lists"]
+    paths = ["ArchipelagoPicross\\ArchipelagoPicross\\worlds\\nonogram\\data", "Site\\lists"]
     for f in filters:
         correct_files = []
         files_filter = [fn for fn in files if fn.startswith(f"p_{f}_")]
