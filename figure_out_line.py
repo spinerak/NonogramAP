@@ -70,11 +70,11 @@ def get_sure_squares(clues, grid_line):
         squares = valid_configs
     
     if not valid_configs:
-        print("\n\n")
-        print(clues, grid_line)
-        print(configs)
-        print(squares)
-        raise ValueError("No valid configurations found")
+        # print("\n\n")
+        # print(clues, grid_line)
+        # print(configs)
+        # print(squares)
+        return False
         return [0] * len(grid_line)
     
     # check all entries in valid_configs, if all have 1 in the same position, mark that position as 1, if all have 3 in the same position, mark that position as 3, else 0

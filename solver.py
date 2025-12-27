@@ -31,6 +31,8 @@ def solve_picross_simple(all_clues):
             clues = all_clues[0][c]
             grid_part = [grid[r][c] for r in range(Y)]
             sol = get_sure_squares(clues, grid_part)
+            if sol is False:
+                return False
             for r in range(Y):
                 if grid[r][c] != sol[r]:
                     todo.append((1, r))
@@ -41,6 +43,8 @@ def solve_picross_simple(all_clues):
             clues = all_clues[1][r]
             grid_part = grid[r]
             sol = get_sure_squares(clues, grid_part)
+            if sol is False:
+                return False
             for c in range(X):
                 if grid[r][c] != sol[c]:
                     todo.append((0, c))
@@ -67,7 +71,10 @@ def build_up_game(clues):
     # deep copy original clues to avoid mutating caller data
     orig = [ [list(cl) for cl in part] for part in (clues[0], clues[1]) ]
     
-    SOL, N = solve_picross_simple(orig)
+    sss = solve_picross_simple(orig)
+    if sss is False:
+        return False
+    SOL, N = sss
     
     # if SOL doesn't contain any 0s:
     if N == len(clues[0]) * len(clues[1]):
@@ -105,25 +112,27 @@ def build_up_game(clues):
 
     step = 1
     positions = collect_positions(masked)
-    while positions:
-        side, li, pi = choice(positions)
-        # install the real value from orig into masked
-        value = orig[side][li][pi]
-        masked[side][li][pi] = value
+    with tqdm(total=len(positions)) as pbar:
+        while positions:
+            side, li, pi = choice(positions)
+            # install the real value from orig into masked
+            value = orig[side][li][pi]
+            masked[side][li][pi] = value
 
-        # prepare solver input (deep copy to avoid accidental sharing)
-        top_mask = [list(cl) for cl in masked[0]]
-        left_mask = [list(cl) for cl in masked[1]]
-        solution, marked = solve_picross_simple([top_mask, left_mask])
+            # prepare solver input (deep copy to avoid accidental sharing)
+            top_mask = [list(cl) for cl in masked[0]]
+            left_mask = [list(cl) for cl in masked[1]]
+            solution, marked = solve_picross_simple([top_mask, left_mask])
 
-        steps.append({
-            "step": step,
-            "changed": (side, li, pi, value),
-            "marked": marked,
-            "solution": solution,
-        })
-        step += 1
-        positions = collect_positions(masked)
+            steps.append({
+                "step": step,
+                "changed": (side, li, pi, value),
+                "marked": marked,
+                "solution": solution,
+            })
+            step += 1
+            positions = collect_positions(masked)
+            pbar.update(1)
 
     return steps, solution
 
@@ -150,20 +159,20 @@ if __name__ == "__main__":
     am_puzzles = 0 # don't change ><
     
     start = 1
-    max_puzzles = 10000
+    max_puzzles = 10
     
     with tqdm(total=max_puzzles) as pbar:
         while am_puzzles < max_puzzles:
             
-            n = random.choices([5,10,15], weights=[0.1,0.9,0])[0]
+            n = random.choices([5,10,15,20], weights=[0,0,1,0])[0]
             x = n
             y = n
 
             pars = {
                 5: [3, 1.5],
                 10: [3, 2],
-                15: [4, 2.5],
-                20: [5, 4.0],
+                15: [4, 3],
+                20: [5, 4.2],
             }
             rando_clues = generate_random_clues(x, y, pars[n][0], pars[n][1])
             if not rando_clues:

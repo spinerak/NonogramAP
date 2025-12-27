@@ -27,7 +27,7 @@ def make_lists_of_puzzles():
         print(e, file=sys.stderr)
         sys.exit(1)
         
-    filters = [5, 10]
+    filters = [5, 10, 15]
     correct_files = {}
     jsonpath = "Site\\lists"
     
@@ -41,7 +41,7 @@ def make_lists_of_puzzles():
             else:
                 if fn.endswith(".json") or fn.endswith(".txt"):
                     (directory / fn).unlink()
-                    (Path(*["spoilers" if part == "puzzles" else part for part in directory.parts]) / fn).unlink()
+                    (Path(*["spoilers" if part == "puzzles" else part for part in directory.parts]) / fn.replace(".json", ".txt")).unlink()
                     print(f"Deleted file {fn} for not meeting filter {f}")
         print(f"Found {len(correct_files)} puzzles for filter {f} (rejected: {len(files_filter) - len(correct_files)})")
     
