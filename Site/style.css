@@ -8,34 +8,51 @@
     --clue-font:25px;
     --left-clue-width:64px; /* overridden by JS */
     --top-clue-rows:1; /* overridden by JS */
+    --five-cell-border:4px;
 }
 
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#041018 0%, #071014 100%);color:var(--muted)}
-.app{
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:28px;
+body {
+  box-sizing: border-box;
+}
+html,body{height:95%;margin:0;padding:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#041018 0%, #071014 100%);color:var(--muted)}
+.app {
+    min-height: 95vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    box-sizing: border-box;
 }
 
-.card{
-    background:linear-gradient(180deg, rgba(255, 255, 255, 0.208), rgba(255, 255, 255, 0.299));
-    border-radius:12px;
-    padding:18px;
-    box-shadow: 0 6px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
-    display:flex;
-    gap:16px;
-    align-items:flex-start;
+
+.card {
+    width: 100%;
+    max-width: 100%; /* Use all available width */
+    height: auto;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.208), rgba(255, 255, 255, 0.299));
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    align-items: flex-start;
+    overflow: hidden; /* Prevent any unwanted scrollbars */
 }
 
-.controls{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    min-width:140px;
+
+
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 140px;
+    flex-shrink: 0; /* Prevent controls from shrinking */
 }
+
+
 .title{
     font-weight:600;
     color:#e6f6ee;
@@ -74,38 +91,43 @@ html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe U
 }
 .btn.reset{background:transparent;border-color:rgba(255,255,255,0.03);color:var(--muted);}
 
-.board-wrap{
-    display:flex;
-    gap:8px;
-    align-items:flex-start;
+.board-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    flex-grow: 1; /* Allow board to grow and fill space */
+    overflow: visible; /* Allow board to expand beyond container if needed */
+    min-width: 0; /* Allow board to shrink if needed */
 }
 
-/* NEW: the unified board grid that contains clues and cells */
-#boardGrid{
-    display:grid;
-    gap:6px;
-    /* grid-template-columns and rows set inline from JS so they match counts */
-    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.06));
-    border-radius:8px;
-    border:1px solid rgba(255,255,255,0.03);
-    padding:6px;
-    touch-action:none;
-    margin: auto;
+
+
+#boardGrid {
+    display: grid;
+    gap: 6px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(0, 0, 0, 0.06));
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    padding: 6px;
+    touch-action: none;
+    width: auto; /* Allow grid to expand to fit content */
+    overflow: visible; /* Prevent internal scrollbars */
 }
 
 /* cells */
-.cell{
-    width:var(--cell-size);
-    height:var(--cell-size);
-    background:rgba(255,255,255,0.04);
-    border-radius:6px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    position:relative;
-    cursor:crosshair;
-    transition:transform .06s ease, box-shadow .06s ease;
-    user-select:none;
+.cell {
+    width: var(--cell-size);
+    height: var(--cell-size);
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: crosshair;
+    transition: transform 0.06s ease, box-shadow 0.06s ease;
+    user-select: none;
+    box-sizing: border-box; /* Add this line */
 }
 .cell:hover{transform:translateY(-2px)}
 .cell.filled{
@@ -118,21 +140,20 @@ html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe U
 }
 
 /* clue cells inside grid */
-.clue-cell{
+.clue-cell {
     font-size: var(--clue-font);
     font-weight: 500;
-    color:var(--muted);
-    display:flex;
+    color: var(--muted);
+    display: flex;
     align-items: center;
-    justify-content:center;
-    cursor:pointer;
-    user-select:none;
-    transition:opacity .18s ease, transform .12s ease;
-    border-radius:6px;
-    color: rgba(0,0,0,1);
-
-    background:rgba(0,0,0,0.06);
-
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.18s ease, transform 0.12s ease;
+    border-radius: 6px;
+    color: rgba(0, 0, 0, 1);
+    background: rgba(0, 0, 0, 0.06);
+    box-sizing: border-box; /* Add this line */
 }
 /* top clues look like small text on transparent bg */
 .clue-cell.top{ width:var(--cell-size); height:calc(var(--clue-font) * 1.6);}
@@ -145,10 +166,8 @@ html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe U
 }
 
 /* Major gridline styles (every 5 cells, first after clue area) */
-.cell.major-v, .clue-cell.major-v { border-right: 4px solid rgba(255,255,255,0.08); }
-.cell.major-h, .clue-cell.major-h { border-bottom: 4px solid rgba(255,255,255,0.08); }
-.cell.major-v2, .clue-cell.major-v2 { border-left: 4px solid rgba(255,255,255,0.08); }
-.cell.major-h2, .clue-cell.major-h2 { border-top: 4px solid rgba(255,255,255,0.08); }
+.cell.major-v, .clue-cell.major-v { border-right: var(--five-cell-border) solid rgba(255,255,255,0.08); }
+.cell.major-h, .clue-cell.major-h { border-bottom: var(--five-cell-border)  solid rgba(255,255,255,0.08); }
 .cell.major-v.major-h, .clue-cell.major-v.major-h { outline: 0; /* both applied */ }
 .cell.major-v.major-h2, .clue-cell.major-v.major-h2 { outline: 0; /* both applied */ }
 
@@ -158,12 +177,53 @@ html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe U
     color:var(--muted);
 }
 
-/* responsive */
-@media (max-width:640px){
-    :root{--cell-size:34px; --clue-font:14px}
-    .card{padding:12px}
-    .controls{min-width:100px}
+@media (max-height:674px) {
+    .app {
+        padding: 0px;
+    }
 }
+@media (max-width:834px), (max-height:597px) {
+    :root{
+        --cell-size:32px;
+        --clue-font:20px;
+        --five-cell-border:5px;
+    }
+}
+
+@media (max-width:730px), (max-height:501px) {
+    :root{
+        --cell-size:24px;
+        --clue-font:15px;
+        --five-cell-border:4px;
+    }
+    #boardGrid {
+        gap: 4px;
+        padding: 4px;
+    }
+}
+
+@media (max-width:597px), (max-height:377px) {
+    :root{
+        --cell-size:18px;
+        --clue-font:10px;
+        --five-cell-border:2px;
+    }
+    #boardGrid {
+        gap: 2px;
+        padding: 2px;
+    }
+    .legend{
+        font-size:9px;
+        margin-top:2px;
+    }
+    .btn{
+        padding:2px 2px;
+        font-size:13px;
+    }
+}
+
+
+
 
 .app {
     display: none;
