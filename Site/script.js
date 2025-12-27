@@ -237,9 +237,10 @@ function startEverything(pathToPuzzle) {
                 boardGrid.appendChild(cell);
             }
         }
-
         // Disable context menu on board
         boardGrid.addEventListener('contextmenu', e=>e.preventDefault());
+
+
     }
 
     /* Helper to set class based on state */
@@ -410,12 +411,92 @@ function startEverything(pathToPuzzle) {
                     window.findAndDetermineChecks(index);
                     
                     if(highScore === scores[scores.length - 1]){
+                        if(COLS*ROWS > 64){
+                            showRoss();
+                        }
                         window.sendGoal();
                     }
                 }
             }
         }
         correctCountEl.textContent = correct + ' / ' + (ROWS * COLS);
+    }
+
+    function showRoss(){
+        // thanks palex
+        // merge the 4x4 CLUEcells top-left into one and place the image yes.png there
+        // merge the top-left clue-area into one element and place yes.png there
+        const merged = document.createElement('div');
+        merged.className = 'clue-merged';
+        merged.style.gridColumn = `1 / ${maxLeftNumbers + 1}`;
+        merged.style.gridRow = `1 / ${maxTopRows + 1}`;
+        merged.style.display = 'flex';
+        merged.style.alignItems = 'center';
+        merged.style.justifyContent = 'center';
+        merged.style.background = 'transparent';
+        merged.style.pointerEvents = 'none';
+        const img = document.createElement('img');
+        img.src = 'yes.png';
+        img.alt = '';
+        img.style.maxWidth = '90%';
+        img.style.maxHeight = '90%';
+        img.style.objectFit = 'contain';
+        // start centered over the puzzle grid, almost as big as the grid.
+        const gridRect = boardGrid.getBoundingClientRect();
+        const vw = window.innerWidth, vh = window.innerHeight;
+        const centerX = gridRect.left + gridRect.width / 2;
+        const centerY = gridRect.top + gridRect.height / 2;
+        const initialScale = Math.min(1.25, (Math.min(gridRect.width, gridRect.height) * 0.9) / (Math.min(vw, vh) * 0.5) || 1);
+
+        img.style.position = 'fixed';
+        img.style.left = centerX + 'px';
+        img.style.top = centerY + 'px';
+        img.style.transform = `translate(-50%,-50%) scale(${initialScale})`;
+        // start fully transparent and fade in; delay transform animation so movement happens after fade
+        img.style.opacity = '0';
+        img.style.transition = 'opacity 2000ms ease, transform 1000ms cubic-bezier(.2,.8,.2,1) 1200ms';
+        img.style.zIndex = '9999';
+        img.style.pointerEvents = 'none';
+        document.body.appendChild(img);
+
+        // force layout then fade in
+        void img.offsetWidth;
+        requestAnimationFrame(() => { img.style.opacity = '1'; });
+
+        // after merged is appended (happens later in this function), animate img into place
+        setTimeout(() => {
+            const mergedRect = merged.getBoundingClientRect();
+            const vw = window.innerWidth, vh = window.innerHeight;
+            const targetCX = mergedRect.left + mergedRect.width / 2;
+            const targetCY = mergedRect.top + mergedRect.height / 2;
+            // use the image starting center (centerX/centerY) as the origin so we move from the grid center to the merged target
+            const deltaX = targetCX - centerX;
+            const deltaY = targetCY - centerY;
+
+            // final scale: make image slightly smaller to fit inside merged area
+            const finalScale = Math.min(1, (mergedRect.width * 0.9) / (Math.min(vw, vh) * 0.5));
+
+            img.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px)) scale(${finalScale})`;
+
+            // when animation completes, make the image a normal child of merged and clear fixed positioning
+            const cleanup = () => {
+                img.removeEventListener('transitionend', cleanup);
+                img.style.transition = '';
+                img.style.position = '';
+                img.style.left = '';
+                img.style.top = '';
+                img.style.transform = '';
+                img.style.zIndex = '';
+                img.style.pointerEvents = '';
+                img.style.maxWidth = '90%';
+                img.style.maxHeight = '90%';
+                if (merged && merged !== img.parentElement) merged.appendChild(img);
+            };
+            img.addEventListener('transitionend', cleanup);
+        }, 50);
+
+        merged.appendChild(img);
+        boardGrid.appendChild(merged);
     }
 
     function updateNextUnlockCount(){
@@ -525,6 +606,7 @@ function startEverything(pathToPuzzle) {
     const CONFIRM_MS = 3000;
 
     resetBtn.addEventListener('click', ()=>{
+        // showRoss();
         if(!awaitingConfirm){
             awaitingConfirm = true;
             resetBtn.textContent = CONFIRM_LABEL;
