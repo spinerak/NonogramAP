@@ -48,7 +48,7 @@ def make_lists_of_puzzles():
     for f, file in correct_files.items():
         out_path = Path(f"{jsonpath}\\pl_{f}.json")
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(json.dumps(correct_files, indent=2, ensure_ascii=False), encoding="utf-8")
+        out_path.write_text(json.dumps(file, indent=2, ensure_ascii=False), encoding="utf-8")
         print(str(out_path))
     
     with Path("ArchipelagoPicross\\ArchipelagoPicross\\worlds\\nonogram\\puzzles.py").open("w", encoding="utf-8") as f_py:
