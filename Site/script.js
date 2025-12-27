@@ -340,9 +340,21 @@ function startEverything(pathToPuzzle) {
         return 'black';
     }
 
+    let lastCellSetR = -1;
+    let lastCellSetC = -1;
+    let lastCellSetV = -1;
+
     /* Set a cell state with given action */
     function setCellState(r,c,action){
         if(r<0||r>=ROWS||c<0||c>=COLS) return;
+        if(r === lastCellSetR && c === lastCellSetC && action === lastCellSetV) return;
+        lastCellSetR = r;
+        lastCellSetC = c;
+        lastCellSetV = action;
+        // play b1.ogg
+        const audio = new Audio('b1.ogg');
+        audio.volume = .4;
+        audio.play();
         const prev = cells[r][c];
         let newState;
         if(action === 'black') newState = 1;
