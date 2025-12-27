@@ -28,26 +28,35 @@ def make_lists_of_puzzles():
         sys.exit(1)
         
     filters = [5, 10]
-    paths = ["ArchipelagoPicross\\ArchipelagoPicross\\worlds\\nonogram\\data", "Site\\lists"]
+    correct_files = {}
+    jsonpath = "Site\\lists"
+    
     for f in filters:
-        correct_files = []
+        correct_files[f] = []
         files_filter = [fn for fn in files if fn.startswith(f"p_{f}_")]
         for fn in files_filter:
             splits = fn.split("_")
             if int(splits[3]) > f:
-                correct_files.append(fn)
+                correct_files[f].append(fn)
             else:
                 if fn.endswith(".json") or fn.endswith(".txt"):
                     (directory / fn).unlink()
                     (Path(*["spoilers" if part == "puzzles" else part for part in directory.parts]) / fn).unlink()
                     print(f"Deleted file {fn} for not meeting filter {f}")
         print(f"Found {len(correct_files)} puzzles for filter {f} (rejected: {len(files_filter) - len(correct_files)})")
-        
-        for p in paths:
-            out_path = Path(f"{p}\\pl_{f}.json")
-            out_path.parent.mkdir(parents=True, exist_ok=True)
-            out_path.write_text(json.dumps(correct_files, indent=2, ensure_ascii=False), encoding="utf-8")
-            print(str(out_path))
+    
+    for f, file in correct_files.items():
+        out_path = Path(f"{jsonpath}\\pl_{f}.json")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(correct_files, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(str(out_path))
+    
+    with Path("ArchipelagoPicross\\ArchipelagoPicross\\worlds\\nonogram\\puzzles.py").open("w", encoding="utf-8") as f_py:
+        f_py.write("L = {\n")
+        for f, fn in correct_files.items():
+            f_py.write(f'    {f}: {fn},\n')
+        f_py.write("}\n")
+        print("Updated puzzles.py")
 
 if __name__ == "__main__":
     make_lists_of_puzzles()
