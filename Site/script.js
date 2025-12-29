@@ -24,7 +24,10 @@ function startEverything(pathToPuzzle) {
         req.overrideMimeType('application/json');
         req.send(null);
         const ok = (req.status === 200) || (req.status === 0 && req.responseText);
-        if(!ok) throw new Error('puzzle not loaded');
+        if(!ok){
+            alert('This puzzle could not be loaded. Might be because I had to delete it, sorry about that...');
+            throw new Error('puzzle not loaded');
+        } 
         const data = JSON.parse(req.responseText || '{}');
 
         // accept multiple possible key styles
@@ -45,6 +48,7 @@ function startEverything(pathToPuzzle) {
 
     /* UI elements */
     const boardGrid = document.getElementById('boardGrid');
+    const btnMouse = document.getElementById('modeMouse'); // New mouse mode button
     const btnFill = document.getElementById('modeFill'); // Black
     const btnMark = document.getElementById('modeMark'); // White
     const btnErase = document.getElementById('modeErase'); // Erase
@@ -67,7 +71,7 @@ function startEverything(pathToPuzzle) {
     /* State: 0 empty, 1 filled(black), 3 marked (white) */
     let cells = new Array(ROWS).fill(0).map(()=>new Array(COLS).fill(0));
     let drawing = false;
-    let drawAction = 'black'; // 'black' or 'white' or 'erase'
+    let drawAction = 'mouse'; // 'black' or 'white' or 'erase'
     let activePointerId = null;
 
     /* track clue done states so clicks persist until reset */
@@ -333,12 +337,14 @@ function startEverything(pathToPuzzle) {
 
     /* Decide action from event (mouse middle-click => erase; right-click => white; left => black; touch/pen use UI mode) */
     function decideActionFromEvent(ev){
-        if(ev.pointerType === 'touch' || ev.pointerType === 'pen'){
-            return drawAction;
+        if(drawAction === 'mouse'){
+            if(ev.pointerType === 'touch' || ev.pointerType === 'pen' || ev.button === 0){
+                return 'black';
+            }
+            if(ev.button === 1) return 'erase'; // middle
+            if(ev.button === 2) return 'white'; // right
         }
-        if(ev.button === 1) return 'erase'; // middle
-        if(ev.button === 2) return 'white'; // right
-        return 'black';
+        return drawAction;
     }
 
     let lastCellSetR = -1;
@@ -348,7 +354,9 @@ function startEverything(pathToPuzzle) {
     /* Set a cell state with given action */
     function setCellState(r,c,action){
         if(r<0||r>=ROWS||c<0||c>=COLS) return;
-        if(r === lastCellSetR && c === lastCellSetC && action === lastCellSetV) return;
+        if(r === lastCellSetR && c === lastCellSetC && action === lastCellSetV){
+            return;
+        }
         lastCellSetR = r;
         lastCellSetC = c;
         lastCellSetV = action;
@@ -511,24 +519,27 @@ function startEverything(pathToPuzzle) {
     }
     window.updateNextUnlockCount = updateNextUnlockCount;
 
+    let drawActionMouse = 'black';
     /* Pointer handlers */
     function onPointerDown(ev){
         ev.preventDefault();
         try{ ev.currentTarget.setPointerCapture(ev.pointerId); }catch(e){}
         drawing = true;
         activePointerId = ev.pointerId;
-        drawAction = decideActionFromEvent(ev);
+        drawActionMouse = decideActionFromEvent(ev);
         const r = Number(ev.currentTarget.dataset.r);
         const c = Number(ev.currentTarget.dataset.c);
-        setCellState(r,c,drawAction);
+        setCellState(r,c,drawActionMouse);
         updateModeUILabel();
     }
 
     function onPointerEnter(ev){
-        if(!drawing || activePointerId !== ev.pointerId) return;
+        if(!drawing || activePointerId !== ev.pointerId){
+            return;
+        }
         const r = Number(ev.currentTarget.dataset.r);
         const c = Number(ev.currentTarget.dataset.c);
-        setCellState(r,c,drawAction);
+        setCellState(r,c,drawActionMouse);
     }
 
     function onPointerUp(ev){
@@ -546,7 +557,7 @@ function startEverything(pathToPuzzle) {
         if(!cellEl) return;
         const r = Number(cellEl.dataset.r);
         const c = Number(cellEl.dataset.c);
-        setCellState(r,c,drawAction);
+        setCellState(r,c,drawActionMouse);
     });
 
     /* Document-level pointerup */
@@ -558,11 +569,13 @@ function startEverything(pathToPuzzle) {
     /* Mode buttons */
     function setMode(m){
         drawAction = m;
+        btnMouse.classList.toggle('active', m==='mouse');
         btnFill.classList.toggle('active', m==='black');
         btnMark.classList.toggle('active', m==='white');
         btnErase.classList.toggle('active', m==='erase');
         updateModeUILabel();
     }
+    btnMouse.addEventListener('click', ()=>setMode('mouse'));
     btnFill.addEventListener('click', ()=>setMode('black'));
     btnMark.addEventListener('click', ()=>setMode('white'));
     btnErase.addEventListener('click', ()=>setMode('erase'));
@@ -570,7 +583,9 @@ function startEverything(pathToPuzzle) {
         let label = 'Black';
         if(drawAction === 'white') label = 'White';
         else if(drawAction === 'erase') label = 'Erase';
+        else if(drawAction === 'mouse') label = 'Mouse';
         modeLabel.textContent = label;
+        btnMouse.classList.toggle('active', drawAction === 'mouse');
         btnFill.classList.toggle('active', drawAction === 'black');
         btnMark.classList.toggle('active', drawAction === 'white');
         btnErase.classList.toggle('active', drawAction === 'erase');

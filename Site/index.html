@@ -18,13 +18,17 @@
         <div class="controls">
             <div class="title">Nonogram</div>
 
-            <div class="mode-row" role="group" aria-label="modes">
-                <button id="modeFill" class="btn active" title="Black cells (filled)">Black</button>
-                <button id="modeMark" class="btn" title="White cells (marked)">White</button>
-                <button id="modeErase" class="btn" title="Erase cells (clear)">Erase</button>
-            </div>
+            <fieldset style="border:1px solid #ccc;padding:8px;border-radius:6px;margin-top:2px;">
+              <legend style="padding:0 6px;font-weight:bold;">Controls:</legend>
+                <div class="mode-row" role="group" aria-label="modes">
+                    <button id="modeMouse" class="btn active" title="Mouse mode">🖱️</button>
+                    <button id="modeFill" class="btn" title="Black cells (filled)">⚫</button>
+                    <button id="modeMark" class="btn" title="White cells (marked)">⚪</button>
+                    <button id="modeErase" class="btn" title="Erase cells (clear)">🧽</button>
+                </div>
+            </fieldset>
 
-            <div class="legend">Mode: <span id="modeLabel">Black</span></div>
+            <div class="legend">Mode: <span id="modeLabel">Black</span>  |  Timer: <span id="timerLabel">00:00</span></div>
 
             <div style="display:flex;gap:8px;margin-top:8px;">
                 <button id="resetBtn" class="btn reset">Reset</button>
@@ -86,7 +90,7 @@
   <div class="popup" role="document">
     <h3 id="popup-title">How clues and controls work</h3>
     <ul>
-      <li>You unlock clues the more squares you marked (black and white) correctly.</li>
+      <li>You unlock clues the more squares you marked (black and white) correctly (new clues are shown in green).</li>
       <li>Controls: left-click and right-click. Middle-click to remove. Or use the modes top-left.</li>
       <li>Some clues are hidden. A <code>?</code> means there will be a clue there at some point, and it will be a number that is at least 1. Use this to logically finish the game.</li>
       <li>You don't have to guess in this puzzle, so please don't :)</li>
