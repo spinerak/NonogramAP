@@ -360,10 +360,12 @@ function startEverything(pathToPuzzle) {
         lastCellSetR = r;
         lastCellSetC = c;
         lastCellSetV = action;
+
         // play b1.ogg
         const audio = new Audio('b1.ogg');
         audio.volume = .4;
         audio.play();
+        
         const prev = cells[r][c];
         let newState;
         if(action === 'black') newState = 1;

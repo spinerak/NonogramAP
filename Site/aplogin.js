@@ -202,6 +202,10 @@ function startAP(size = 0){
             return keys[Math.min(nclues, keys.length - 1)];
         })();
         document.getElementById('inLogicCount').innerText = inLogic !== undefined ? inLogic : '—';
+        // play b1.ogg
+        const audio = new Audio('b2.ogg');
+        audio.volume = .4;
+        audio.play();
     }
 
     const connectedListener = (packet) => {
