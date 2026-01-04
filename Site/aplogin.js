@@ -1,5 +1,5 @@
 
-const audio2 = new Audio('ding.wav');
+
 
 // Function to get URL parameters
 function getUrlParameter(name) {
@@ -62,7 +62,8 @@ document.getElementById('offline15').addEventListener('click', function() {
 });
 
 
-let nclues = 0;
+window.nclues = 0;
+
 function startAP(size = 0){
     console.log("Starting AP login...");
 
@@ -137,13 +138,21 @@ function startAP(size = 0){
         
         
         client
-        .login(hostport, name, "Nonogram", {password: password})
+        .login(hostport, name, "Nonograhmm", {password: password})
             .then(() => {
                 console.log("Connected to the server");
             })
             .catch((error) => {
                 console.log("Failed to connect", error);
-                document.getElementById('error-label').innerText = error + "\n Common remedies: refresh room and check login info.";
+                let txt = (error && error.message) ? error.message : String(error);
+                if (txt.includes("InvalidGame")){
+                    const el = document.getElementById('error-label');
+                    el.innerHTML = 'Game is incorrect. Playing an older version? Please move to <a href="https://nonogram-ap.netlify.app/" style="color:#ffffff;text-decoration:underline;">https://nonogram-ap.netlify.app/</a>';
+                    return;
+                }else{
+                    txt += "\nCommon remedies: refresh room and check login info.";
+                }
+                document.getElementById('error-label').innerText = txt;
             });
 
     }
@@ -172,26 +181,38 @@ function startAP(size = 0){
     }
 
     function openItems(items) {
+        let got_any = false;
         for (let i = 0; i < items.length; i++) {
             let item = items[i][0];
-            if (item == "Nonogram clues") {
+            if (item == "Nonograhmm clues") {
                 gotClue();
+                got_any = true;
             }
+        }
+        if (got_any) {
+            const audio2 = new Audio('ding.wav');
+            audio2.volume = .4;
+            audio2.play();
         }
     }
 
     function gotClue(){
-        console.log("Got clue ", nclues);
-        applyUnlocksForScore(nclues);
-        nclues += 1;
-        const inLogic = window.unlock_keys[nclues];
-        document.getElementById('inLogicCount').innerText = inLogic !== undefined ? inLogic : '—';
-        // play b1.ogg
-        audio2.volume = .4;
-        audio2.play();
+        console.log("Got clue ", window.nclues);
+        window.nclues += 1;
+        window.updateNextUnlockCount();
+        window.checkAndUpdate();
     }
 
-    const connectedListener = (packet) => {
+    
+    function setCheckpoint(value){
+        client.storage
+            .prepare(`NNH${window.slot}`, 0)
+            .max(value)         // Clamp value above 0.
+            .commit();      // Commit operations to data storage.
+    }
+    window.setCheckpoint = setCheckpoint;
+
+    const connectedListener = async (packet) => {
         document.getElementById("login-container").style.display = "none";
         document.getElementById("app").style.display = "flex";
 
@@ -200,6 +221,7 @@ function startAP(size = 0){
 
         const puzzle = packet.slot_data.puzzle;
         const apworld = packet.slot_data.apworld_version;
+        window.slot = packet.slot;
         console.log("AP World Version: ", apworld);
         if(apworld == "0.0.3"){
             alert("A new apworld is out. You will be redirected to an older version of the game that is compatible.");
@@ -214,14 +236,11 @@ function startAP(size = 0){
 
         window.is_connected = true;
 
-        // Add the event listener and keep a reference to the handler
-        window.beforeUnloadHandler = function (e) {
-            const confirmationMessage = "Are you sure you want to leave this page?";
-            e.preventDefault();
-            e.returnValue = confirmationMessage;
-            return confirmationMessage;
-        };
-        window.addEventListener("beforeunload", window.beforeUnloadHandler);
+        let keys = [`NNH${window.slot}`];
+        let results = (await client.storage.fetch(keys, true))
+        console.log(results);
+        window.solveUntil(results[`NNH${window.slot}`] || 0);
+
     };
 
     const disconnectedListener = (packet) => {

@@ -25,7 +25,6 @@ function startEverything(puzzle) {
     let COLS = topClues.length;
     let ROWS = leftClues.length;
 
-    console.log(topClues, leftClues, COLS, ROWS);
 
     let solution = puzzle['S'];
     window.unlock_order = puzzle['G'];
@@ -38,8 +37,9 @@ function startEverything(puzzle) {
     }
 
     let highScore = -1; // start -1 so score 0 counts as a new high score the first time
+    let highScoreCheckpoint = -1;
     
-    const correctCountEl = document.getElementById('correctCount');
+    const filledCountEl = document.getElementById('filledCount');
     const nextUnlockCountEl = document.getElementById('nextUnlockCount');
     const inLogicCountEl = document.getElementById('inLogicCount');
 
@@ -354,8 +354,10 @@ function startEverything(puzzle) {
     side: 0 => top (column), 1 => left (row).
     We'll reveal the entire clue line when unlocking.
     */
+
+    let highestUnlocked = -1;
     function applyUnlocksForScore(nclues){
-        // console.log(window.unlock_keys, window.unlock_order);
+        // if(nclues <= highestUnlocked) return;
 
         const newEls = boardGrid.querySelectorAll('.clue-cell.new');
         newEls.forEach(el=>el.classList.remove('new'));
@@ -383,8 +385,21 @@ function startEverything(puzzle) {
                 ready_to_unlock = true;
             }
         }
+        highestUnlocked = nclues;
+        console.log(nclues, window.nclues)
+        if(window.unlock_keys[nclues+1] == window.unlock_keys[window.nclues]){
+            // console.log('in logic update: done!', window.unlock_keys[nclues+1], window.unlock_keys[window.nclues]);
+            inLogicCountEl.textContent = `${window.unlock_keys[nclues+1] === undefined ? 'done!' : window.unlock_keys[nclues+1]}`;
+        }else{
+            // console.log('in logic update:', window.unlock_keys[nclues+1], window.unlock_keys[window.nclues]);
+            if(window.unlock_keys[window.nclues] === undefined){
+                inLogicCountEl.textContent = `${window.unlock_keys[nclues+1]} now (${window.unlock_keys[window.nclues-1]} total)`;
+            }else{
+                inLogicCountEl.textContent = `${window.unlock_keys[nclues+1]} now (${window.unlock_keys[window.nclues]} total)`;
+            }
+        }
+        
     }
-    window.applyUnlocksForScore = applyUnlocksForScore;
 
     /* Decide action from event (mouse middle-click => erase; right-click => white; left => black; touch/pen use UI mode) */
     function decideActionFromEvent(ev){
@@ -458,8 +473,22 @@ function startEverything(puzzle) {
         }
 
         // update correct count if solution present
-        updateCorrectCount();
+        checkAndUpdate();
     }
+
+    function solveUntil(n){
+        for(let r=0;r<ROWS;r++){
+            for(let c=0;c<COLS;c++){
+                const solRow = solution[r] || new Array(COLS).fill(0);
+                const sol = solRow[c];
+                if(sol[1] <= n){
+                    const st = sol[0];
+                    setCellState(r,c, st === 1 ? 'black' : 'white', true);
+                }
+            }
+        }
+    }
+    window.solveUntil = solveUntil;
 
     /* Update correct markings count.
     We treat a cell as correct when:
@@ -467,15 +496,16 @@ function startEverything(puzzle) {
         - OR it's marked (state===-1) and the solution for that position is falsy (0/undefined)
     If solution missing or size mismatch we show "—".
     */
-    function updateCorrectCount(showTip=false){
+    function checkAndUpdate(showTip=false){
         if(!solution || !Array.isArray(solution) || solution.length !== ROWS){
-            correctCountEl.textContent = '—';
+            filledCountEl.textContent = '—';
             nextUnlockCountEl.textContent = '—';
             inLogicCountEl.textContent = '—';
             return;
         }
         let correct = 0;
 
+        let filled = 0;
         let lowest_incorrect = Infinity;
         let list_incorrect = [];
         let loc_lowest_notknown = null;
@@ -485,6 +515,9 @@ function startEverything(puzzle) {
             for(let c=0;c<COLS;c++){
                 const sol = solRow[c]; // expected values matching state: 0 or 1/-1 etc. We'll compare strictly
                 const st = cells[r][c];
+                if(st == 1 || st == -1){
+                    filled += 1;
+                }
                 if(sol[0] === st){
                     if(sol[1] > highest_correct){
                         highest_correct = sol[1];
@@ -500,6 +533,9 @@ function startEverything(puzzle) {
                 }
             }
         }
+        // update amount filled
+        filledCountEl.textContent = filled + ' / ' + (ROWS * COLS);
+
 
         function markCellAsTip(r,c,cls){
             const sel = `div[data-role="cell"][data-r="${r}"][data-c="${c}"]`;
@@ -518,6 +554,7 @@ function startEverything(puzzle) {
                 const [r,c] = list_incorrect[idx];
                 markCellAsTip(r,c,'tip-wrong');
             }else{
+                if(loc_lowest_notknown === null) return;
                 const [r,c,s] = loc_lowest_notknown;
                 if (s == 0){
                     for (let rr=0;rr<ROWS;rr++){
@@ -543,7 +580,12 @@ function startEverything(puzzle) {
 
                 if(window.unlock_keys.includes(highScore)){
                     const index = window.unlock_keys.indexOf(highScore);
+                    console.log('New high score!', highScore, 'at index', index, 'in unlock keys', window.unlock_keys);
                     window.findAndDetermineChecks(index);
+
+                    if(correct > highScoreCheckpoint){
+                        highScoreCheckpoint = correct;
+                    }
                     
                     if(highScore === window.unlock_keys[window.unlock_keys.length - 1]){
                         // if(COLS*ROWS > 64){
@@ -554,13 +596,23 @@ function startEverything(puzzle) {
                 }
             }
         }
-        correctCountEl.textContent = correct + ' / ' + (ROWS * COLS);
+
+        console.log('Correct count:', correct, 'nclues:', window.nclues, 'max', window.unlock_keys.length - 1);
+        for(let i = 0; i <= window.unlock_keys.length; i++){
+            if(correct >= window.unlock_keys[Math.min(i, window.unlock_keys.length - 1)] && window.nclues > i){
+                // console.log('Updating nclues', window.nclues, 'to', i, 'for score', window.unlock_keys[i]);
+                applyUnlocksForScore(i);
+            }
+        }
+        
+        window.setCheckpoint(highScoreCheckpoint);
     }
 
     document.getElementById('modeTip').addEventListener('click', ()=>{
         // find first incorrect cell and highlight it briefly
-        updateCorrectCount(true);
+        checkAndUpdate(true);
     });
+    window.checkAndUpdate = checkAndUpdate;
 
     function showRoss(){
         // thanks palex
@@ -787,10 +839,8 @@ function startEverything(puzzle) {
 
     /* initialize board */
     buildBoardGrid();
-    // treat score 0 as new highscore on first load: reveal any unlocks for 0
-    // applyUnlocksForScore(0);
     updateModeUILabel();
-    updateCorrectCount();
+    checkAndUpdate();
 }
 
 // keyboard shortcuts for modes 1-4

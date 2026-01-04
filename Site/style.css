@@ -157,6 +157,7 @@ html,body{
     touch-action: none;
     width: auto; /* Allow grid to expand to fit content */
     overflow: visible; /* Prevent internal scrollbars */
+    cursor: crosshair;
 }
 
 /* cells */
