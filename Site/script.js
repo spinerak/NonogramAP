@@ -78,22 +78,17 @@ function startEverything(puzzle) {
         const controlsH = controlsEl ? controlsEl.getBoundingClientRect().height : 0;
         const mqSmallPortrait = window.matchMedia && window.matchMedia('(max-width: 834px) and (orientation: portrait)').matches;
         let wrapW, wrapH;
-        if(mqSmallPortrait){
-            // In small portrait, don't subtract controlsW and CARD_GAP from width;
-            // subtract controlsH and CARD_GAP from height.
-            wrapW = Math.max(0, window.innerWidth - (CARD_PADDING * 2));
-            wrapH = Math.max(0, window.innerHeight - controlsH - (CARD_PADDING * 2) - CARD_GAP);
-        } else {
-            wrapW = Math.max(0, window.innerWidth - controlsW - (CARD_PADDING * 2) - CARD_GAP);
-            wrapH = Math.max(0, window.innerHeight - (CARD_PADDING * 2));
-        }
+
+        wrapW = Math.max(0, window.innerWidth * 0.8 - (CARD_PADDING * 2));
+        wrapH = Math.max(0, window.innerHeight * 0.95 - (CARD_PADDING * 2));
+        
 
         console.log('wrap size', wrapW, wrapH);
         let colsTotal = ((COLS || 0) + (maxLeftNumbers || 0)) || 1;
         // colsTotal += 1;
         let rowsTotal = ((ROWS || 0) + (maxTopRows || 0)) || 1;
         // rowsTotal += 1;
-        const cellSizePx = Math.max(8, Math.floor(Math.min(wrapW / colsTotal, wrapH / rowsTotal))) / 1.15; // floor to integer, min 8px
+        const cellSizePx = Math.max(8, Math.floor(Math.min(wrapW / colsTotal, wrapH / rowsTotal))) / 1.25; // floor to integer, min 8px
         root.style.setProperty('--cell-size', cellSizePx + 'px');
         console.log('calculation:', wrapW, '/', colsTotal, 'and', wrapH, '/', rowsTotal, '=> cell size', cellSizePx);
     }
@@ -422,6 +417,7 @@ function startEverything(puzzle) {
     let ignoreInputs = false;
     /* Set a cell state with given action */
     function setCellState(r,c,action,force=false){
+        console.log('setCellState', r, c, action, force);
         let prev;
         if(!force){
             if (ignoreInputs) return;
@@ -441,14 +437,18 @@ function startEverything(puzzle) {
             }
             let sol = solution[r][c];
 
-            
+            console.log('solution at', r, c, 'is', sol);
             if ((sol[0] == 1 && action === 'white') || (sol[0] == -1 && action === 'black')){
                 action = 'error';
             }
             
-            if (sol[1] > window.unlock_keys[Math.min(highScore+1, window.unlock_keys.length - 1)]){
-                action = 'error';
+            if (action == 'white' || action == 'black'){
+                console.log('checking unlock for', nclues, window.unlock_keys);
+                if (sol[1] > window.unlock_keys[Math.min(nclues+1, window.unlock_keys.length - 1)]){
+                    action = 'error';
+                }
             }
+            console.log('final action at', r, c, 'is', action);
             
 
             lastCellSetR = r;
@@ -474,6 +474,8 @@ function startEverything(puzzle) {
         else if(action === 'cross'){
             if(cells[r][c] === 0.5){
                 newState = 0.6;
+            }else if(cells[r][c] === 0.6){
+                newState = 0;
             }else{
                 newState = 0.5;
             }
@@ -777,24 +779,21 @@ function startEverything(puzzle) {
     /* Mode buttons */
     function setMode(m){
         drawAction = m;
-        btnMouse.classList.toggle('active', m==='mouse');
-        btnFill.classList.toggle('active', m==='black');
-        btnMark.classList.toggle('active', m==='white');
-        btnErase.classList.toggle('active', m==='erase');
-        btnCross.classList.toggle('active', m==='cross');
+        btnMouse.classList.toggle('seld', m==='mouse');
+        btnFill.classList.toggle('seld', m==='black');
+        btnMark.classList.toggle('seld', m==='white');
+        btnCross.classList.toggle('seld', m==='cross');
         updateModeUILabel();
     }
     btnMouse.addEventListener('click', ()=>setMode('mouse'));
     btnFill.addEventListener('click', ()=>setMode('black'));
     btnMark.addEventListener('click', ()=>setMode('white'));
-    btnErase.addEventListener('click', ()=>setMode('erase'));
     btnCross.addEventListener('click', ()=>setMode('cross'));
     function updateModeUILabel(){
-        btnMouse.classList.toggle('active', drawAction === 'mouse');
-        btnFill.classList.toggle('active', drawAction === 'black');
-        btnMark.classList.toggle('active', drawAction === 'white');
-        btnErase.classList.toggle('active', drawAction === 'erase');
-        btnCross.classList.toggle('active', drawAction === 'cross');
+        btnMouse.classList.toggle('seld', drawAction === 'mouse');
+        btnFill.classList.toggle('seld', drawAction === 'black');
+        btnMark.classList.toggle('seld', drawAction === 'white');
+        btnCross.classList.toggle('seld', drawAction === 'cross');
     }
 
     /* Clue click handler: toggles "done" and fades item a bit */
@@ -826,31 +825,6 @@ function startEverything(puzzle) {
     let awaitingConfirm = false;
     const CONFIRM_MS = 3000;
 
-    resetBtn.addEventListener('click', ()=>{
-        // showRoss();
-        if(!awaitingConfirm){
-            awaitingConfirm = true;
-            resetBtn.textContent = CONFIRM_LABEL;
-            if(confirmTimer) clearTimeout(confirmTimer);
-            confirmTimer = setTimeout(()=>{
-                awaitingConfirm = false;
-                resetBtn.textContent = RESET_LABEL;
-                confirmTimer = null;
-            }, CONFIRM_MS);
-        } else {
-            if(confirmTimer){ clearTimeout(confirmTimer); confirmTimer = null; }
-            awaitingConfirm = false;
-            resetBtn.textContent = RESET_LABEL;
-
-            // clear state
-            cells = new Array(ROWS).fill(0).map(()=>new Array(COLS).fill(0));
-            for(let c=0;c<topDone.length;c++) for(let i=0;i<topDone[c].length;i++) topDone[c][i] = false;
-            for(let r=0;r<leftDone.length;r++) for(let i=0;i<leftDone[r].length;i++) leftDone[r][i] = false;
-            
-            buildBoardGrid();
-        }
-    });
-
     /* keyboard shortcuts */
     window.addEventListener('keydown', (e)=>{
         if(e.key === 'w') setMode('white');
@@ -865,23 +839,23 @@ function startEverything(puzzle) {
     checkAndUpdate();
 }
 
-// keyboard shortcuts for modes 1-4
-(function(){
-    const keyMap = { '1':'modeFill', '2':'modeMark', '3':'modeErase', '4':'modeCross' };
-    function activate(id){
-    const btn = document.getElementById(id); if(!btn) return;
-    // prefer triggering existing click handlers
-    btn.click();
-    // ensure visual active state
-    const row = btn.closest('.mode-row'); if(!row) return;
-    row.querySelectorAll('.btn').forEach(b => b.classList.toggle('active', b === btn));
-    }
-    document.addEventListener('keydown', e => {
-    const tgt = e.target;
-    if (tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' || tgt.isContentEditable)) return;
-    if (keyMap[e.key]) { activate(keyMap[e.key]); e.preventDefault(); }
-    });
-})();
+// // keyboard shortcuts for modes 1-4
+// (function(){
+//     const keyMap = { '1':'modeFill', '2':'modeMark', '3':'modeErase', '4':'modeCross' };
+//     function activate(id){
+//     const btn = document.getElementById(id); if(!btn) return;
+//     // prefer triggering existing click handlers
+//     btn.click();
+//     // ensure visual active state
+//     const row = btn.closest('.mode-row'); if(!row) return;
+//     row.querySelectorAll('.btn').forEach(b => b.classList.toggle('active', b === btn));
+//     }
+//     document.addEventListener('keydown', e => {
+//     const tgt = e.target;
+//     if (tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' || tgt.isContentEditable)) return;
+//     if (keyMap[e.key]) { activate(keyMap[e.key]); e.preventDefault(); }
+//     });
+// })();
 
 
 
