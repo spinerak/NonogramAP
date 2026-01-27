@@ -186,6 +186,10 @@ html,body{
     background:linear-gradient(180deg,#cccccc,#6f6f6f);
     /* box-shadow: inset 0 1px 0 rgba(207,207,207,0.02), 0 3px 6px rgba(207,207,207,0.6); */
 }
+.cell.error{
+    background:linear-gradient(180deg,#cccc00,#cc0000);
+    /* box-shadow: inset 0 1px 0 rgba(207,207,207,0.02), 0 3px 6px rgba(207,207,207,0.6); */
+}
 .cell.tip-next{
     outline: 2px solid #30a34f;
     outline-offset: 2px;

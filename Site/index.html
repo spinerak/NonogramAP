@@ -38,7 +38,7 @@
               <div> Timer: <span id="timerLabel">00:00</span></div>
 
               <div style="display:flex;gap:8px;">
-                  <button id="resetBtn" class="btn reset">Reset</button>
+                  <button id="resetBtn" class="btn reset" style="display: none">Reset</button>
                   <button id="helpBtn" class="btn reset">Help</button>
               </div>
             </div>
@@ -78,10 +78,7 @@
             <fieldset>
                 <legend style="padding:0 6px;font-weight:bold;">Play solo:</legend>
                 <div style="display:flex;gap:8px;">
-                    <button type="button" id="offline5" class="login-submit" style="background-color:#7a3434;display:none;">5x5</button>
-                    <button type="button" id="offline10" class="login-submit" style="background-color:#7a3434;display:none;">10x10</button>
-                    <button type="button" id="offline15" class="login-submit" style="background-color:#7a3434;display:none;">15x15</button>
-                    <a href="https://nonogram-ap.netlify.app/" style="color:#ffffff;text-decoration:underline;">Not done yet, so click here to go back to previous version.</a>
+                    <button type="button" id="soloPlay" class="login-submit" onclick="location.href='solo_collection.html';" title="Play solo">Solo play</button>
                 </div>
             </fieldset>
         </div>

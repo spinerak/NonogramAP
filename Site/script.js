@@ -295,11 +295,12 @@ function startEverything(puzzle) {
         el.classList.toggle('marked', state===-1);
         el.classList.toggle('cross', state===0.5);
         el.classList.toggle('cross2', state===0.6);
+        el.classList.toggle('error', state===1000);
     }
 
 
     /* Reveal helper: updates revealed arrays and DOM */
-    function revealTopClue(colIndex, itemIndex, value){
+    function revealTopClue(colIndex, itemIndex, value, isnew=true){
         if(colIndex < 0 || colIndex >= topClues.length) return;
         if(itemIndex === null){
             // reveal whole column
@@ -315,12 +316,12 @@ function startEverything(puzzle) {
             if(topRevealed[colIndex][idx] && itemIndex == idx){
                 n.textContent = value;
                 n.title = `Column ${colIndex+1} clue ${value}`;
-                n.classList.add('new');
+                if(isnew) n.classList.add('new');
             }
         });
     }
 
-    function revealLeftClue(rowIndex, itemIndex, value){
+    function revealLeftClue(rowIndex, itemIndex, value, isnew=true){
         if(rowIndex < 0 || rowIndex >= leftClues.length) return;
         if(itemIndex === null){
             for(let i=0;i<leftClues[rowIndex].length;i++) leftRevealed[rowIndex][i] = true;
@@ -335,16 +336,16 @@ function startEverything(puzzle) {
                 n.textContent = value;
                 n.title = `Row ${rowIndex+1} clue ${value}`;
                 n.classList.add('new');
+                if(isnew) n.classList.add('new');
             }
         });
     }
 
-    
-    function revealClue(side, lineIndex, itemIndex, value){
+    function revealClue(side, lineIndex, itemIndex, value, isnew=true){
         if(side === 0){
-            revealTopClue(lineIndex, itemIndex, value);
+            revealTopClue(lineIndex, itemIndex, value, isnew);
         } else {
-            revealLeftClue(lineIndex, itemIndex, value);
+            revealLeftClue(lineIndex, itemIndex, value, isnew);
         }
     }
 
@@ -363,30 +364,28 @@ function startEverything(puzzle) {
         newEls.forEach(el=>el.classList.remove('new'));
 
         const val_to_unlock = window.unlock_keys[nclues];
-        console.log('Applying unlocks for score', nclues, '=>', val_to_unlock);
+        // console.log('Applying unlocks for score', nclues, '=>', val_to_unlock);
 
         let ready_to_unlock = false;
         for(const v of window.unlock_order){
-            if(ready_to_unlock){
-                // console.log('Applying unlock for score', nclues, v);
-                const u = v[0];
-                if(u){
-                    const side = Number(u[0]);
-                    const lineIndex = Number(u[1]);
-                    const hintIndex = Number(u[2]);
-                    if(isNaN(side) || isNaN(lineIndex) || isNaN(hintIndex)) continue;
-                    revealClue(side, lineIndex, hintIndex, u[3]);
-                }
-                if(v[1] > val_to_unlock){
-                    break;
-                }
+            const u = v[0];
+            if(u){
+                const side = Number(u[0]);
+                const lineIndex = Number(u[1]);
+                const hintIndex = Number(u[2]);
+                if(isNaN(side) || isNaN(lineIndex) || isNaN(hintIndex)) continue;
+                // console.log('  unlocking clue', side, lineIndex, hintIndex, 'value', u[3]);
+                revealClue(side, lineIndex, hintIndex, u[3], ready_to_unlock);
+            }
+            if(v[1] > val_to_unlock){
+                break;
             }
             if(v[1] == val_to_unlock){
                 ready_to_unlock = true;
+                // console.log('Found unlock point for score', nclues, v);
             }
         }
         highestUnlocked = nclues;
-        console.log(nclues, window.nclues)
         if(window.unlock_keys[nclues+1] == window.unlock_keys[window.nclues]){
             // console.log('in logic update: done!', window.unlock_keys[nclues+1], window.unlock_keys[window.nclues]);
             inLogicCountEl.textContent = `${window.unlock_keys[nclues+1] === undefined ? 'done!' : window.unlock_keys[nclues+1]}`;
@@ -420,10 +419,12 @@ function startEverything(puzzle) {
     let lastCellSetC = -1;
     let lastCellSetV = -1;
 
+    let ignoreInputs = false;
     /* Set a cell state with given action */
     function setCellState(r,c,action,force=false){
         let prev;
         if(!force){
+            if (ignoreInputs) return;
             if(r<0||r>=ROWS||c<0||c>=COLS) return;
             if(r === lastCellSetR && c === lastCellSetC){
                 if(action === lastCellSetV){
@@ -435,6 +436,21 @@ function startEverything(puzzle) {
                 // console.log('skipping setCellState due to action mismatch', action, drawActionMouse);
                 return;
             }
+            if(cells[r][c] == 1 || cells[r][c] == -1){
+                return;
+            }
+            let sol = solution[r][c];
+
+            
+            if ((sol[0] == 1 && action === 'white') || (sol[0] == -1 && action === 'black')){
+                action = 'error';
+            }
+            
+            if (sol[1] > window.unlock_keys[Math.min(highScore+1, window.unlock_keys.length - 1)]){
+                action = 'error';
+            }
+            
+
             lastCellSetR = r;
             lastCellSetC = c;
             lastCellSetV = action;
@@ -461,8 +477,14 @@ function startEverything(puzzle) {
             }else{
                 newState = 0.5;
             }
+        } else if(action === 'error'){
+            newState = 1000;
+            ignoreInputs = true;
+            setTimeout(()=>{
+                ignoreInputs = false;
+                setCellState(r,c,'erase', true);
+            }, 3000);
         } 
-        else return;
         if(prev === newState) return;
         cells[r][c] = newState;
         // find the cell element by data attributes
@@ -597,7 +619,7 @@ function startEverything(puzzle) {
             }
         }
 
-        console.log('Correct count:', correct, 'nclues:', window.nclues, 'max', window.unlock_keys.length - 1);
+        // console.log('Correct count:', correct, 'nclues:', window.nclues, 'max', window.unlock_keys.length - 1);
         for(let i = 0; i <= window.unlock_keys.length; i++){
             if(correct >= window.unlock_keys[Math.min(i, window.unlock_keys.length - 1)] && window.nclues > i){
                 // console.log('Updating nclues', window.nclues, 'to', i, 'for score', window.unlock_keys[i]);
