@@ -37,7 +37,6 @@ function startEverything(puzzle) {
     }
 
     let highScore = -1; // start -1 so score 0 counts as a new high score the first time
-    let highScoreCheckpoint = -1;
     
     const filledCountEl = document.getElementById('filledCount');
     const nextUnlockCountEl = document.getElementById('nextUnlockCount');
@@ -461,12 +460,13 @@ function startEverything(puzzle) {
             }
         }
 
+        if(!force){
+            // play b1.ogg
+            const audio1 = new Audio('b1.ogg');
+            audio1.volume = .4;
+            audio1.play();
+        }
 
-        // play b1.ogg
-        const audio1 = new Audio('b1.ogg');
-        audio1.volume = .4;
-        audio1.play();
-        
         let newState;
         if(action === 'black') newState = 1;
         else if(action === 'white') newState = -1;
@@ -500,19 +500,24 @@ function startEverything(puzzle) {
         checkAndUpdate();
     }
 
-    function solveUntil(n){
+    function gotSaveData(savedata){
+        if(!savedata) return;
         for(let r=0;r<ROWS;r++){
             for(let c=0;c<COLS;c++){
-                const solRow = solution[r] || new Array(COLS).fill(0);
-                const sol = solRow[c];
-                if(sol[1] <= n){
-                    const st = sol[0];
-                    setCellState(r,c, st === 1 ? 'black' : 'white', true);
+                const st = savedata[r][c];
+                if(st == 1){
+                    // black
+                    setCellState(r,c, 'black', true);
+                }else if (st == -1){
+                    // white
+                    setCellState(r,c, 'white', true);
                 }
             }
         }
+        checkAndUpdate();
+        updateNextUnlockCount();
     }
-    window.solveUntil = solveUntil;
+    window.gotSaveData = gotSaveData;
 
     /* Update correct markings count.
     We treat a cell as correct when:
@@ -530,10 +535,10 @@ function startEverything(puzzle) {
         let correct = 0;
 
         let filled = 0;
-        let lowest_incorrect = Infinity;
-        let list_incorrect = [];
+        
         let loc_lowest_notknown = null;
-        let highest_correct = 0;
+        let lowest_incorrect = Infinity;
+        
         for(let r=0;r<ROWS;r++){
             const solRow = solution[r] || new Array(COLS).fill(0);
             for(let c=0;c<COLS;c++){
@@ -543,12 +548,10 @@ function startEverything(puzzle) {
                     filled += 1;
                 }
                 if(sol[0] === st){
-                    if(sol[1] > highest_correct){
-                        highest_correct = sol[1];
-                    }
+                    correct += 1;
                 }else{
                     if(st !== 0 && st !== 0.5){
-                        list_incorrect.push([r,c]);
+                        console.log("SHOULD NOT BE POSSIBLE ANYMORE!")
                     }
                     if(sol[1] < lowest_incorrect){
                         lowest_incorrect = sol[1];
@@ -557,9 +560,9 @@ function startEverything(puzzle) {
                 }
             }
         }
+
         // update amount filled
         filledCountEl.textContent = filled + ' / ' + (ROWS * COLS);
-
 
         function markCellAsTip(r,c,cls){
             const sel = `div[data-role="cell"][data-r="${r}"][data-c="${c}"]`;
@@ -570,27 +573,20 @@ function startEverything(puzzle) {
             }
         }
 
-        correct = lowest_incorrect === Infinity ? highest_correct : (lowest_incorrect - 1);
         if(showTip){
-            if(list_incorrect.length > 0){
-                // pick a random incorrect cell to highlight
-                const idx = Math.floor(Math.random() * list_incorrect.length);
-                const [r,c] = list_incorrect[idx];
-                markCellAsTip(r,c,'tip-wrong');
-            }else{
-                if(loc_lowest_notknown === null) return;
-                const [r,c,s] = loc_lowest_notknown;
-                if (s == 0){
-                    for (let rr=0;rr<ROWS;rr++){
-                        markCellAsTip(rr,c,'tip-next');
-                    }
-                }
-                if (s == 1){
-                    for (let cc=0;cc<COLS;cc++){
-                        markCellAsTip(r,cc,'tip-next');
-                    }
+            if(loc_lowest_notknown === null) return;
+            const [r,c,s] = loc_lowest_notknown;
+            if (s == 0){
+                for (let rr=0;rr<ROWS;rr++){
+                    markCellAsTip(rr,c,'tip-next');
                 }
             }
+            if (s == 1){
+                for (let cc=0;cc<COLS;cc++){
+                    markCellAsTip(r,cc,'tip-next');
+                }
+            }
+            
             return;
         }
         
@@ -603,13 +599,8 @@ function startEverything(puzzle) {
                 // then call findAndDetermineChecks with that index
 
                 if(window.unlock_keys.includes(highScore)){
-                    const index = window.unlock_keys.indexOf(highScore);
-                    console.log('New high score!', highScore, 'at index', index, 'in unlock keys', window.unlock_keys);
-                    window.findAndDetermineChecks(index);
 
-                    if(correct > highScoreCheckpoint){
-                        highScoreCheckpoint = correct;
-                    }
+                    window.findAndDetermineChecks(highScore);
                     
                     if(highScore === window.unlock_keys[window.unlock_keys.length - 1]){
                         // if(COLS*ROWS > 64){
@@ -619,6 +610,8 @@ function startEverything(puzzle) {
                     }
                 }
             }
+            // update save data
+            window.saveBoard(cells);
         }
 
         // console.log('Correct count:', correct, 'nclues:', window.nclues, 'max', window.unlock_keys.length - 1);
@@ -628,8 +621,7 @@ function startEverything(puzzle) {
                 applyUnlocksForScore(i);
             }
         }
-        
-        window.setCheckpoint(highScoreCheckpoint);
+
     }
 
     document.getElementById('modeTip').addEventListener('click', ()=>{
@@ -716,13 +708,15 @@ function startEverything(puzzle) {
     }
 
     function updateNextUnlockCount(){
+        console.log(window.unlock_keys, window.checked_locations);
         const arr = window.checked_locations || [];
-        const seen = new Set(arr.filter(n => !isNaN(n)));
-        let missing = 68;
-        while(seen.has(missing)) missing++;
-        const X = missing - 67; // 1-based
-        best_correct = (window.unlock_keys[X] !== undefined) ? window.unlock_keys[X] : 'done!';
-        nextUnlockCountEl.textContent = best_correct;
+        for(let i of window.unlock_keys){
+            if(i>0 && !arr.includes(i+67)){
+                nextUnlockCountEl.textContent = i;
+                return;
+            }
+        }
+        nextUnlockCountEl.textContent = "done!";
     }
     window.updateNextUnlockCount = updateNextUnlockCount;
 

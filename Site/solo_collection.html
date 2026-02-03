@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Solo Collection — Picross</title>
+    <style>
+        :root{
+            --bg:#0b0f14;
+            --card:#0f1720;
+            --muted:#98a0aa;
+            --accent:#7c5cff;
+            --glass: rgba(255,255,255,0.03);
+            --radius:12px;
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            margin:0;
+            font-family: Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+            background: radial-gradient(1200px 600px at 10% 10%, rgba(124,92,255,0.12), transparent),
+                                    radial-gradient(800px 400px at 90% 90%, rgba(0,180,190,0.06), transparent),
+                                    var(--bg);
+            color:#e6eef6;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:32px;
+        }
+
+        .card{
+            width:min(360px,96vw);
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+            border:1px solid rgba(255,255,255,0.04);
+            box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+            border-radius:var(--radius);
+            padding:20px;
+            backdrop-filter: blur(6px);
+        }
+
+        .header{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            margin-bottom:14px;
+        }
+        .logo{
+            width:44px;height:44px;border-radius:10px;
+            background:linear-gradient(135deg,var(--accent),#3ee7c6);
+            display:grid;place-items:center;font-weight:700;color:#061226;
+            box-shadow:0 6px 18px rgba(124,92,255,0.18), inset 0 -4px 12px rgba(0,0,0,0.2);
+        }
+        h1{font-size:16px;margin:0}
+        p.sub{margin:0;color:var(--muted);font-size:13px}
+
+        .controls{display:grid;gap:12px;margin-top:8px}
+        .row{display:flex;gap:10px;align-items:center}
+        label{font-size:13px;color:var(--muted);min-width:86px}
+        select, input[type="text"], button{
+            background:var(--glass);
+            border:1px solid rgba(255,255,255,0.04);
+            color:inherit;
+            padding:10px 12px;
+            border-radius:10px;
+            font-size:14px;
+            outline:none;
+        }
+        /* dark dropdown background + darker options */
+        select{
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+            color: #e6eef6;
+        }
+        option{
+            background: var(--card);
+            color: #e6eef6;
+        }
+
+        select:focus, input:focus, button:focus{box-shadow:0 0 0 4px rgba(124,92,255,0.12)}
+        input[readonly]{color:var(--muted);cursor:default}
+
+        .actions{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+        .action-row{width:100%;display:block}
+        .action-row > button{
+            width:100%;
+            padding:12px 14px;
+            font-weight:600;
+            background:linear-gradient(180deg,var(--accent),#5a3be7);
+            border:none;color:#061226;
+            cursor:pointer;border-radius:10px;
+            transition:transform .12s ease,box-shadow .12s ease;
+        }
+        /* make play-row's button match the other action buttons (it's nested) */
+        .action-row .play-row button{
+            padding:12px 14px;
+            font-weight:600;
+            background:linear-gradient(180deg,var(--accent),#5a3be7);
+            border:none;color:#061226;
+            cursor:pointer;border-radius:10px;
+            transition:transform .12s ease,box-shadow .12s ease;
+        }
+        .action-row > button:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(7,11,22,0.6)}
+        .action-row .play-row button:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(7,11,22,0.6)}
+        .play-row{display:flex;gap:8px;align-items:center}
+        /* button first, select narrow */
+        .play-row button{flex:1}
+        .play-row select{flex:0 0 80px;min-width:60px}
+
+        .muted{color:var(--muted);font-size:13px;margin-top:8px}
+
+    </style>
+</head>
+<body>
+    <main class="card" role="main">
+        <div class="header">
+            <div class="logo">🤔</div>
+            <div>
+                <h1>Nonograhmm Solo Collection</h1>
+                <p class="sub">Pick a board size and gimmick</p>
+            </div>
+        </div>
+
+        <div class="controls" role="region" aria-label="Controls">
+            <div class="row">
+                <label for="rowsSelect"># Rows</label>
+                <select id="rowsSelect" aria-label="Number of rows">
+                    <option value="5" selected>5</option>
+                    <!-- <option value="6">6</option> -->
+                    <!-- <option value="7">7</option> -->
+                    <option value="8">8</option>
+                    <!-- <option value="9">9</option> -->
+                    <option value="10">10</option>
+                    <!-- <option value="11">11</option> -->
+                    <!-- <option value="12">12</option> -->
+                    <!-- <option value="13">13</option> -->
+                    <!-- <option value="14">14</option> -->
+                    <option value="15">15</option>
+                </select>
+            </div>
+            <div class="row">
+                <label for="colsSelect"># Columns</label>
+                <select id="colsSelect" aria-label="Number of columns">
+                    <option value="5" selected>5</option>
+                    <!-- <option value="6">6</option> -->
+                    <!-- <option value="7">7</option> -->
+                    <option value="8">8</option>
+                    <!-- <option value="9">9</option> -->
+                    <option value="10">10</option>
+                    <!-- <option value="11">11</option> -->
+                    <!-- <option value="12">12</option> -->
+                    <!-- <option value="13">13</option> -->
+                    <!-- <option value="14">14</option> -->
+                    <option value="15">15</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <label for="gimmickSelect">Gimmick</label>
+                <div class="gimmick-wrap" style="position:relative;display:flex;align-items:center;gap:8px;">
+                    <select id="gimmickSelect" aria-label="Gimmick">
+                        <option value='0' selected>No gimmicks</option>
+                        <option value='1'>Odd/Even</option>
+                        <option value='2'>One of Two</option>
+                        <option value='3'>Plus and Minus</option>
+                        <option value='4'>*EVERYTHING*</option>
+                    </select>
+
+                    <button id="gimmickInfoBtn" type="button" aria-expanded="false" aria-controls="gimmickInfo"
+                        title="Gimmick info"
+                        style="background:var(--glass);border:1px solid rgba(255,255,255,0.04);color:inherit;padding:6px 8px;border-radius:8px;cursor:pointer;font-weight:700;">
+                        ?
+                    </button>
+
+                    <div id="gimmickInfo" class="gimmick-info" role="region" aria-hidden="true"
+                        style="position:absolute;top:calc(100% - 100px);left:0;min-width:260px;background:linear-gradient(180deg, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.71));border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:8px;box-shadow:0 8px 24px rgba(2,6,23,0.6);color:var(--muted);font-size:13px;display:none;z-index:30;">
+                        <div style="color:#e6eef6;font-weight:600;margin-bottom:6px">Gimmick info</div>
+                        <div style="margin-bottom:6px"><strong>Odd/Even</strong><br>Ω: number is odd<br>E: number is even</div>
+                        <div style="margin-bottom:6px"><strong>One of Two</strong><br>/: number is one of two possible values (e.g., "2/4" means the number is either 2 or 4)</div>
+                        <div><strong>Plus and Minus</strong><br>-: number is at most a certain value (e.g., "3-" means the number is 1, 2, or 3)<br>+: number is at least a certain value (e.g., "3+" means the number is 3 or greater)</div>
+                    </div>
+
+                    <style>
+                        /* show tooltip on hover as well */
+                        .gimmick-wrap:hover .gimmick-info { display: block; }
+                    </style>
+
+                    <script>
+                        (function(){
+                            const btn = document.getElementById('gimmickInfoBtn');
+                            const panel = document.getElementById('gimmickInfo');
+                            btn.addEventListener('click', (e)=>{
+                                e.stopPropagation();
+                                const open = btn.getAttribute('aria-expanded') === 'true';
+                                btn.setAttribute('aria-expanded', String(!open));
+                                panel.style.display = open ? 'none' : 'block';
+                                panel.setAttribute('aria-hidden', String(open));
+                            });
+                            document.addEventListener('click', (e)=>{
+                                if (!panel.contains(e.target) && !btn.contains(e.target)) {
+                                    btn.setAttribute('aria-expanded','false');
+                                    panel.style.display = 'none';
+                                    panel.setAttribute('aria-hidden','true');
+                                }
+                            });
+                            document.addEventListener('keydown', (e)=>{
+                                if (e.key === 'Escape') {
+                                    btn.setAttribute('aria-expanded','false');
+                                    panel.style.display = 'none';
+                                    panel.setAttribute('aria-hidden','true');
+                                }
+                            });
+                        })();
+                    </script>
+                </div>
+            </div>
+
+            <div class="row">
+                <label for="clearedInfo">Info</label>
+                <input id="clearedInfo" type="text" readonly value="Number of puzzles: 0" />
+            </div>
+
+            <div class="actions" aria-hidden="false">
+                <div class="action-row" style="display:none">
+                    <button id="btnRandomUncleared" type="button" >Random unsolved</button>
+                </div>
+
+                <div class="action-row">
+                    <button id="btnRandom" type="button">Play random puzzle</button>
+                </div>
+
+                <div class="action-row">
+                    <div class="play-row">
+                        <button id="btnPlaySpecific" type="button">Play specific puzzle:</button>
+                        <select id="puzzleNumber" aria-label="Puzzle number"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // populate numbers 1..100
+        const numSelect = document.getElementById('puzzleNumber');
+        for(let i=1;i<=100;i++){
+            const o = document.createElement('option');
+            o.value = i;
+            o.textContent = i;
+            numSelect.appendChild(o);
+        }
+        // quick access IDs for later hooking
+        window.SoloCollectionControls = {
+            rows: document.getElementById('rowsSelect'),
+            cols: document.getElementById('colsSelect'),
+            gimmick: document.getElementById('gimmickSelect'),
+            cleared: document.getElementById('clearedInfo'),
+            randomBtn: document.getElementById('btnRandom'),
+            randomUnclearedBtn: document.getElementById('btnRandomUncleared'),
+            playSpecificBtn: document.getElementById('btnPlaySpecific'),
+            puzzleNumber: numSelect
+        };
+
+        // update numSelect options to 1..count
+        function populateNumSelect(count){
+            numSelect.innerHTML = '';
+            for(let i=1;i<=count;i++){
+                const o = document.createElement('option');
+                o.value = i;
+                o.textContent = i;
+                numSelect.appendChild(o);
+            }
+        }
+
+        // update the second number in the cleared input value (e.g. "Solved 0/0" -> "Solved 0/N")
+        function updateClearedTotal(total){
+            const el = SoloCollectionControls.cleared;
+            el.value = `Number of puzzles: ${total}`;
+        }
+
+        async function updateForSelection(){
+            const rows = SoloCollectionControls.rows.value;
+            const cols = SoloCollectionControls.cols.value;
+            const gimmick = SoloCollectionControls.gimmick.value;
+
+            try{
+                const res = await fetch('solo_puzzles/ps.txt');
+                if(!res.ok) throw new Error('File not found');
+                const txt = await res.text();
+                const lines = txt.split(/\r?\n/).filter(l => l.trim().length > 0);
+
+                let found = false;
+                let total = 0;
+                for(const line of lines){
+                    const parts = line.trim().split(/[\s,]+/); // accept space or comma separators
+                    if(parts.length < 4) continue;
+                    const [r,c,g,countStr] = parts;
+                    if(String(r) === String(rows) && String(c) === String(cols) && String(g) === String(gimmick)){
+                        const n = parseInt(countStr, 10);
+                        if(!isNaN(n)) total = n;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if(found && total > 0){
+                    populateNumSelect(total);
+                }else{
+                    populateNumSelect(0);
+                }
+                updateClearedTotal(total);
+            }catch(err){
+                console.error(err);
+                populateNumSelect(0);
+                updateClearedTotal(0);
+            }
+        }
+
+        SoloCollectionControls.rows.addEventListener('change', updateForSelection);
+        SoloCollectionControls.cols.addEventListener('change', updateForSelection);
+        SoloCollectionControls.gimmick.addEventListener('change', updateForSelection);
+
+        // initialize once on load
+        updateForSelection();
+
+        SoloCollectionControls.randomBtn.addEventListener('click', () => {
+            const rows = SoloCollectionControls.rows.value;
+            const cols = SoloCollectionControls.cols.value;
+            const gimmick = SoloCollectionControls.gimmick.value;
+            const puzzleNum = Math.floor(Math.random() * SoloCollectionControls.puzzleNumber.options.length) + 1;
+
+            location.assign(`index.html?solo=${rows}_${cols}_${gimmick}_${puzzleNum}`);
+        });
+
+        SoloCollectionControls.playSpecificBtn.addEventListener('click', () => {
+            const rows = SoloCollectionControls.rows.value;
+            const cols = SoloCollectionControls.cols.value;
+            const gimmick = SoloCollectionControls.gimmick.value;
+            const puzzleNum = SoloCollectionControls.puzzleNumber.value;
+
+            location.assign(`index.html?solo=${rows}_${cols}_${gimmick}_${puzzleNum}`);
+        });
+    </script>
+</body>
+</html>

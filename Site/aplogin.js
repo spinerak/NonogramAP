@@ -81,10 +81,13 @@ function startAP(puzzle_dict){
             function startWithPuzzle(puzzle_dict){
                 window.chosenPuzzle = puzzle_dict;
                 window.checked_locations = [];
-                console.log("Chosen offline puzzle:", chosenPuzzle);
+                
                 window.startEverything(window.chosenPuzzle, []);
                 document.getElementById("login-container").style.display = "none";
-                document.getElementById("app").style.display = "flex";
+                document.getElementById("leftBar").style.display = "flex";
+                document.getElementById("rightBar").style.display = "flex";
+                document.getElementById("bottomBar").style.display = "flex";
+                document.getElementById("mainArea").style.display = "flex";
                 window.is_connected = true;
 
                 document.getElementById('labelMode').textContent = "Solo";
@@ -185,20 +188,12 @@ function startAP(puzzle_dict){
         window.checkAndUpdate();
     }
 
-    
-    function setCheckpoint(value){
-        if(!window.solo){
-            client.storage
-                .prepare(`NNH${window.slot}`, 0)
-                .max(value)         // Clamp value above 0.
-                .commit();      // Commit operations to data storage.
-        }
-    }
-    window.setCheckpoint = setCheckpoint;
-
     const connectedListener = async (packet) => {
         document.getElementById("login-container").style.display = "none";
-        document.getElementById("app").style.display = "flex";
+        document.getElementById("leftBar").style.display = "flex";
+        document.getElementById("rightBar").style.display = "flex";
+        document.getElementById("bottomBar").style.display = "flex";
+        document.getElementById("mainArea").style.display = "flex";
 
         apstatus = "AP: Connected";
         console.log("Connected packet: ", packet);
@@ -220,10 +215,10 @@ function startAP(puzzle_dict){
 
         window.is_connected = true;
 
-        let keys = [`NNH${window.slot}`];
+        let keys = [`NNH_${window.slot}`];
         let results = (await client.storage.fetch(keys, true))
         console.log(results);
-        window.solveUntil(results[`NNH${window.slot}`] || 0);
+        window.gotSaveData(results[`NNH_${window.slot}`] || null);
 
     };
 
@@ -237,8 +232,12 @@ function startAP(puzzle_dict){
 
     const roomupdateListener = (packet) => {
         console.log(packet);
-        if(packet.checked_locations){
-            window.checked_locations += packet.checked_locations;
+        for(let o of packet.checked_locations){
+            if(!window.checked_locations.includes(o)){
+                window.checked_locations.push(o);
+            }
+            //sort:
+            window.checked_locations.sort((a,b)=>a-b);
             console.log("Updated checked locations:", window.checked_locations);
         }
         window.updateNextUnlockCount();
@@ -247,7 +246,9 @@ function startAP(puzzle_dict){
     function findAndDetermineChecks(total){
         console.log("Finding and determining checks for total:", total);
         sendCheck(67 + total);
-        window.checked_locations.push(67 + total);
+        if(!window.checked_locations.includes(67 + total)){
+            window.checked_locations.push(67 + total);
+        }
         window.updateNextUnlockCount();
     }
     window.findAndDetermineChecks = findAndDetermineChecks;
@@ -257,6 +258,9 @@ function startAP(puzzle_dict){
             if(window.solo){
                 console.log("Solo mode, pretending to check ", key);
                 gotClue();
+                const audio2 = new Audio('ding.mp3');
+                audio2.volume = .3;
+                audio2.play();
                 return;
             }
             client.check(parseInt(key));
@@ -275,10 +279,31 @@ function startAP(puzzle_dict){
         }
     }
 
+    function saveBoard(puzzle){
+        if(window.is_connected){
+            if(window.solo){
+                return;
+            }
+            let puzzle2 = puzzle;
+            for (let i = 0; i < puzzle2.length; i++){
+                for (let j = 0; j < puzzle2[i].length; j++){
+                    if(puzzle2[i][j] == 0.5 || puzzle2[i][j] == 0.6){
+                        puzzle2[i][j] = 0;
+                    }
+                }
+            }
+            const key_name = `NNH_${window.slot}`;
+            const value = puzzle2;
+            client.storage.prepare(key_name, 0).replace(value).commit();
+            console.log("Saved board to AP storage.");
+        }
+    }
+
     window.sendCheck = sendCheck;
     window.sendGoal = sendGoal;
+    window.saveBoard = saveBoard;
 
-    console.log("0.1.0")
+    console.log("0.2.0")
     connectToServer();
 }
 
@@ -291,19 +316,7 @@ if(getUrlParameter('solo')){
     const soloParam = getUrlParameter('solo'); // e.g. "5_5_0" or "5_5_0_3"
     const parts = soloParam ? soloParam.split('_').filter(p => p.length > 0) : [];
 
-    if (parts.length === 3) {
-        // format: A_B_C -> use full param as filename
-        filename = `solo_puzzles/P_${soloParam}.txt`;
-    } else if (parts.length >= 4) {
-        // format: A_B_C_N -> remove last segment for filename, use last as puzzle index
-        const base = parts.slice(0, -1).join('_');
-        filename = `solo_puzzles/P_${base}.txt`;
-        puzzleNum = parseInt(parts[parts.length - 1], 10);
-        if (Number.isNaN(puzzleNum)) puzzleNum = null;
-    } else {
-        // fallback: use whole param
-        filename = `solo_puzzles/P_${soloParam}.txt`;
-    }
+    filename = `solo_puzzles/P_${soloParam}.txt`;
 
     fetch(filename)
       .then(res => {

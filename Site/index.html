@@ -62,7 +62,7 @@
       width:10%;
       min-width:56px;
       background:#0c1114;
-      display:flex;
+      display:none;
       flex-direction:column;
       align-items:stretch;
       height:100vh;
@@ -82,6 +82,7 @@
       border-bottom:1px solid rgba(255,255,255,0.02);
       user-select:none;
       background: rgba(255, 255, 255, 0.151);
+      font-size: 5vw;
   }
   .left-bar button.seld {
     outline: 5px solid #041018;
@@ -96,12 +97,11 @@
       width:10%;
       min-width:56px;
       background:#0f1518;
-      display:flex;
+      display:none;
       flex-direction:column;
       align-items:stretch;
       height:100vh;
       box-shadow: inset 1px 0 0 rgba(255,255,255,0.02);
-      font-size: calc(var(--clue-font) * 1.5);
   }
   .right-bar button {
       flex:1;
@@ -109,7 +109,6 @@
       margin:0;
       padding:6px;
       color:var(--muted);
-      font-size: calc(var(--clue-font) * 1.5);
       cursor:pointer;
       display:flex;
       align-items:center;
@@ -117,6 +116,7 @@
       border-bottom:1px solid rgba(255,255,255,0.02);
       user-select:none;
       background: rgba(255, 255, 255, 0.151);
+      font-size: 5vw;
   }
   .bottom-bar {
       position:fixed;
@@ -125,7 +125,7 @@
       bottom:0;
       width:77.2%;
       height:5vh;
-      display:flex;
+      display:none;
       align-items:center;
       justify-content:space-around;
       gap:12px;
@@ -133,13 +133,12 @@
       background:var(--panel);
       box-shadow:inset 0 1px 0 rgba(255,255,255,0.02);
       z-index:9999;
-      font-size: var(--clue-font);
   }
 
   /* Main area (game) */
   .main {
       flex:1;
-      display:flex;
+      display:none;
       align-items:stretch;
       justify-content:center;
       height:95vh;
@@ -329,12 +328,18 @@
   .login-submit { width: 100%; background-color: #4caf50; color: white; padding: 10px 0; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
   .login-submit:hover { background-color: #45a049; }
   .login-description { margin: 1px; color: #ffffff; }
+
+  .legend {
+      color: #ffffff;
+      font-size: 3vh;
+  }
 </style>
 
 <title>Nonograhmm</title>
 
 </head>
 <body>
+    
 
 <div class="rotate-overlay" id="rotateOverlay">
   Please rotate your device to landscape to play Nonograhmm.
@@ -393,8 +398,8 @@
 </script>
 </div>
 
-<div class="bottom-bar">
-  <div>Timer: <span id="timerLabel">00:00</span></div>
+<div class="bottom-bar" id="bottomBar">
+  <div class="legend">Timer: <span id="timerLabel">00:00</span></div>
   <div class="legend">Filled in: <span id="filledCount">—</span></div>
   <div class="legend">Next unlock: <span id="nextUnlockCount">—</span></div>
   <div class="legend">In logic: <span id="inLogicCount">—</span></div>
@@ -432,45 +437,6 @@
     </div>
 </div>
 
-
-<script>
-      (function(){
-    const overlay = document.getElementById('simple-popup');
-    const closeBtn = document.getElementById('popup-close');
-    const gotItBtn = document.getElementById('popup-gotit');
-
-    function reallyShowPopup() {
-      overlay.style.display = 'flex';
-    }
-    function hidePopup() {
-      overlay.style.display = 'none';
-      // never show the popup again
-      localStorage.setItem('popup-shown', 'true');
-    }
-
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) hidePopup();
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && overlay.style.display === 'flex') hidePopup();
-    });
-
-    const helpBtn = document.getElementById('helpBtn');
-    const STORAGE_KEY = 'popup-shown';
-
-    if (helpBtn) {
-        helpBtn.addEventListener('click', () => {
-            localStorage.setItem(STORAGE_KEY, 'true');
-            document.getElementById('helpBtn').style.backgroundColor = 'rgba(255,255,255,0)';
-            reallyShowPopup();
-        });
-
-        if (!localStorage.getItem(STORAGE_KEY)) {
-            document.getElementById('helpBtn').style.backgroundColor = '#ffffff';
-        }
-    }
-  })();
-</script>
 
 <!-- Main application script -->
 
