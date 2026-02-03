@@ -78,7 +78,7 @@ function startEverything(puzzle) {
         const mqSmallPortrait = window.matchMedia && window.matchMedia('(max-width: 834px) and (orientation: portrait)').matches;
         let wrapW, wrapH;
 
-        wrapW = Math.max(0, window.innerWidth * 0.8 - (CARD_PADDING * 2));
+        wrapW = Math.max(0, window.innerWidth * 0.9 - (CARD_PADDING * 2));
         wrapH = Math.max(0, window.innerHeight * 0.95 - (CARD_PADDING * 2));
         
 
@@ -87,7 +87,7 @@ function startEverything(puzzle) {
         // colsTotal += 1;
         let rowsTotal = ((ROWS || 0) + (maxTopRows || 0)) || 1;
         // rowsTotal += 1;
-        const cellSizePx = Math.max(8, Math.floor(Math.min(wrapW / colsTotal, wrapH / rowsTotal))) / 1.25; // floor to integer, min 8px
+        const cellSizePx = Math.max(8, Math.floor(Math.min(wrapW / colsTotal, wrapH / rowsTotal))) / 1.1; // floor to integer, min 8px
         root.style.setProperty('--cell-size', cellSizePx + 'px');
         console.log('calculation:', wrapW, '/', colsTotal, 'and', wrapH, '/', rowsTotal, '=> cell size', cellSizePx);
     }

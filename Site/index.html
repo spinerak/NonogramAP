@@ -43,29 +43,14 @@
       overflow:hidden;
   }
 
-  .rotate-overlay {
-      display:none;
-      position:fixed;
-      inset:0;
-      background:linear-gradient(180deg,#041018cc, #071014cc);
-      color:var(--muted);
-      align-items:center;
-      justify-content:center;
-      z-index:10000;
-      text-align:center;
-      padding:20px;
-      font-size:18px;
-  }
-
   /* Left bar: two big vertical buttons (black / white) */
   .left-bar {
       width:10%;
-      min-width:56px;
       background:#0c1114;
       display:none;
       flex-direction:column;
       align-items:stretch;
-      height:100vh;
+      height:95vh;
       box-shadow: inset -1px 0 0 rgba(255,255,255,0.02);
   }
   .left-bar button {
@@ -74,7 +59,6 @@
       margin:0;
       padding:0;
       color:var(--muted);
-      font-size:1.1rem;
       cursor:pointer;
       display:flex;
       align-items:center;
@@ -82,25 +66,20 @@
       border-bottom:1px solid rgba(255,255,255,0.02);
       user-select:none;
       background: rgba(255, 255, 255, 0.151);
-      font-size: 5vw;
+      font-size: calc(min(5vw, 5vh));
   }
   .left-bar button.seld {
-    outline: 5px solid #041018;
-    outline-offset: -10px;
+    background: rgba(255, 255, 255, 0.326);
   }
-  /* .left-bar button.black {background:linear-gradient(180deg,#222,#111); color:#fff;}
-  .left-bar button.white {background:linear-gradient(180deg,#f5f5f5,#dcdcdc); color:#111;}
-  .left-bar button.mouse {background:linear-gradient(180deg,#777,#777); color:#777;} */
 
   /* Right-side narrow options bar */
   .right-bar {
-      width:10%;
-      min-width:56px;
+      width:0%;
       background:#0f1518;
       display:none;
       flex-direction:column;
       align-items:stretch;
-      height:100vh;
+      height:95vh;
       box-shadow: inset 1px 0 0 rgba(255,255,255,0.02);
   }
   .right-bar button {
@@ -115,21 +94,18 @@
       justify-content:center;
       border-bottom:1px solid rgba(255,255,255,0.02);
       user-select:none;
-      background: rgba(255, 255, 255, 0.151);
-      font-size: 5vw;
+      background: rgba(255, 255, 255, 0);
+      font-size: calc(min(5vw, 5vh));
   }
   .bottom-bar {
       position:fixed;
-      left:10%;
-      right:0;
+      left:0;
       bottom:0;
-      width:77.2%;
+      width:100%;
       height:5vh;
       display:none;
       align-items:center;
       justify-content:space-around;
-      gap:12px;
-      padding:6px 12px;
       background:var(--panel);
       box-shadow:inset 0 1px 0 rgba(255,255,255,0.02);
       z-index:9999;
@@ -143,6 +119,13 @@
       justify-content:center;
       height:95vh;
       overflow:auto;
+      margin:0;
+      padding:0;
+
+  }
+
+  .app {
+       width: 100%;
   }
 
   .card {
@@ -153,17 +136,16 @@
       align-self: stretch;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.02));
       border-radius: 12px;
-      padding: 18px;
+      padding: 8px;
       box-shadow: 0 6px 30px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.02);
       display: flex;
       flex-direction: row;
-      gap: 16px;
-      align-items: flex-start;
-      width: calc(100% - 36px);
-      height: calc(95vh - 36px);
+      gap: 2px;
+      align-items: center;
+      width: 100%;
+      height: 100%;
       max-width: 100%;
       max-height: 100%;
-      margin: 18px;
       overflow: auto;
   }
 
@@ -171,28 +153,29 @@
       display: none; /* hide old controls - using side bars instead */
   }
 
-  .board-wrap {
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
-      flex-grow: 1;
-      overflow: visible;
-      width: 100%;
-      height: 100%;
-  }
+.board-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    overflow: visible;
+    width: 100%;
+    height: 100%;
+}
 
-  #boardGrid {
-      display: grid;
-      gap: calc(var(--gap));
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.186));
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.03);
-      padding: 6px;
-      touch-action: none;
-      width: auto;
-      overflow: visible;
-      cursor: crosshair;
-  }
+#boardGrid {
+    display: grid;
+    gap: calc(var(--gap));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.186));
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.03);
+    touch-action: none;
+    width: auto;
+    overflow: visible;
+    cursor: crosshair;
+    margin: 0 auto;
+    padding: 3px;
+}
 
   .cell {
       width: var(--cell-size);
@@ -299,28 +282,27 @@
   .cell.major-v, .clue-cell.major-v { border-right: var(--five-cell-border) solid #919191; }
   .cell.major-h, .clue-cell.major-h { border-bottom: var(--five-cell-border)  solid #919191; }
 
-  /* rotate to landscape message for portrait devices */
-  @media (orientation: portrait) {
-      .main, .left-bar, .right-bar, .card { display:none !important; }
-      .rotate-overlay { display:flex !important; }
-  }
-
   /* keep older helper styles in place (login etc.) */
-  .login-container {
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-  }
-  .login-form {
-      background-color: #1f1f1f;
-      border-radius: 5px;
-      padding: 20px;
-      width: 300px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-  }
+.login-container {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+}
+.login-form {
+    background-color: #1f1f1f;
+    border-radius: 5px;
+    padding: 20px;
+    width: 300px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
 
   .login-heading { margin-bottom: 20px; color: #ffffff; font-size: 30px; }
   .login-label { display: block; color: #ffffff; margin-bottom: 5px; }
@@ -331,7 +313,7 @@
 
   .legend {
       color: #ffffff;
-      font-size: 3vh;
+      font-size: calc(min(3vh, 3vw));
   }
 </style>
 
@@ -339,11 +321,6 @@
 
 </head>
 <body>
-    
-
-<div class="rotate-overlay" id="rotateOverlay">
-  Please rotate your device to landscape to play Nonograhmm.
-</div>
 
 <!-- Left vertical bar: Black / White -->
 <div class="left-bar" id="leftBar">
@@ -351,6 +328,9 @@
   <button id="modeMark" class="white" title="Mark white">⚪</button>
   <button id="modeMouse" class="mouse" title="Mouse mode">🖱️</button>
   <button id="modeCross" title="Mark">✏️</button>
+  <button id="switchUI" title="Switch UI">↔️</button>
+  <button id="fullScreen" title="Full Screen">⛶</button>
+  <button id="modeTip" title="Hint">💡</button>
 </div>
 
 <!-- Main game area -->
@@ -366,8 +346,8 @@
 
 <!-- Right vertical options bar -->
 <div class="right-bar" id="rightBar">
-  <button id="modeTip" title="Hint">💡</button>
-  <button id="switchUI" title="Switch UI">↔️</button>
+</div>
+
 <script>
 (function(){
   const switchBtn = document.getElementById('switchUI');
@@ -395,8 +375,27 @@
   }
 
 })();
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) { 
+            document.documentElement.webkitRequestFullscreen(); // Safari
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) { 
+            document.webkitExitFullscreen(); // Safari
+        }
+    }
+}
+document.getElementById('fullScreen').addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleFullscreen();
+});
 </script>
-</div>
 
 <div class="bottom-bar" id="bottomBar">
   <div class="legend">Timer: <span id="timerLabel">00:00</span></div>
