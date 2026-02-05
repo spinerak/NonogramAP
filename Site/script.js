@@ -290,6 +290,11 @@ function startEverything(puzzle) {
         el.classList.toggle('cross', state===0.5);
         el.classList.toggle('cross2', state===0.6);
         el.classList.toggle('error', state===1000);
+        el.classList.toggle('error2', state===999);
+        el.classList.toggle('error3', state===998);
+        el.classList.toggle('error4', state===997);
+        el.classList.toggle('error5', state===996);
+        el.classList.toggle('error6', state===995);
     }
 
 
@@ -478,14 +483,26 @@ function startEverything(puzzle) {
             }else{
                 newState = 0.5;
             }
-        } else if(action === 'error'){
-            newState = 1000;
-            ignoreInputs = true;
-            setTimeout(()=>{
-                ignoreInputs = false;
-                setCellState(r,c,'erase', true);
-            }, 3000);
-        } 
+        } else if(action.startsWith('error')){
+            if(action === 'error') {
+                newState = 1000;
+                ignoreInputs = true;
+                setTimeout(()=>{setCellState(r,c,'error2', true);}, 100);
+                setTimeout(()=>{setCellState(r,c,'error3', true);}, 300);
+                setTimeout(()=>{setCellState(r,c,'error4', true);}, 600);
+                setTimeout(()=>{setCellState(r,c,'error5', true);}, 1000);
+                setTimeout(()=>{setCellState(r,c,'error6', true);}, 1500);
+                setTimeout(()=>{
+                    ignoreInputs = false;
+                    setCellState(r,c,'erase', true);
+                }, 2000);
+            }
+            if(action === 'error2') newState = 999;
+            if(action === 'error3') newState = 998;
+            if(action === 'error4') newState = 997;
+            if(action === 'error5') newState = 996;
+            if(action === 'error6') newState = 995;
+        }      
         if(prev === newState) return;
         cells[r][c] = newState;
         // find the cell element by data attributes
@@ -549,7 +566,7 @@ function startEverything(puzzle) {
                 if(sol[0] === st){
                     correct += 1;
                 }else{
-                    if(st !== 0 && st !== 0.5){
+                    if(st !== 0 && st !== 0.5 && st < 10){
                         console.log("SHOULD NOT BE POSSIBLE ANYMORE!")
                     }
                     if(sol[1] < lowest_incorrect){
