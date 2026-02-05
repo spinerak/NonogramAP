@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
     <title>Solo Collection — Picross</title>
     <style>
         :root{
@@ -27,16 +27,17 @@
             display:flex;
             align-items:center;
             justify-content:center;
-            padding:32px;
+            padding:2px;
         }
 
         .card{
-            width:min(360px,96vw);
+            width:100%;
+            max-width:400px;
             background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
             border:1px solid rgba(255,255,255,0.04);
             box-shadow: 0 8px 30px rgba(2,6,23,0.6);
             border-radius:var(--radius);
-            padding:20px;
+            padding:5px;
             backdrop-filter: blur(6px);
         }
 
@@ -55,7 +56,8 @@
         h1{font-size:16px;margin:0}
         p.sub{margin:0;color:var(--muted);font-size:13px}
 
-        .controls{display:grid;gap:12px;margin-top:8px}
+        .controls{display:grid;margin-top:8px;width:100%;max-height:70vh;overflow-y:auto}
+        .controls > *{min-width:0}
         .row{display:flex;gap:10px;align-items:center}
         label{font-size:13px;color:var(--muted);min-width:86px}
         select, input[type="text"], button{
@@ -86,7 +88,7 @@
             width:100%;
             padding:12px 14px;
             font-weight:600;
-            background:linear-gradient(180deg,var(--accent),#5a3be7);
+            background:linear-gradient(180deg,var(--accent),#7063a7);
             border:none;color:#061226;
             cursor:pointer;border-radius:10px;
             transition:transform .12s ease,box-shadow .12s ease;
@@ -95,7 +97,7 @@
         .action-row .play-row button{
             padding:12px 14px;
             font-weight:600;
-            background:linear-gradient(180deg,var(--accent),#5a3be7);
+            background:linear-gradient(180deg,var(--accent),#7063a7);
             border:none;color:#061226;
             cursor:pointer;border-radius:10px;
             transition:transform .12s ease,box-shadow .12s ease;
@@ -121,37 +123,37 @@
             </div>
         </div>
 
-        <div class="controls" role="region" aria-label="Controls">
+        <div class="how-to-play" style="margin-bottom:20px;padding:14px;background:rgba(124,92,255,0.08);border:1px solid rgba(124,92,255,0.2);border-radius:10px;max-height:35vh;overflow-y:auto;">
+            <h2 style="font-size:12px;margin:0 0 8px 0;color:#7c5cff;">How to Play</h2>
+            <ul style="margin:0;padding-left:20px;font-size:12px;line-height:1.4;color:var(--muted);">
+            <li>Click cells to mark them as filled (black) or empty (white).</li>
+            <li>You can left- and right-click for black/white, or toggle input modes on the sidebar.</li>
+            <li>Use the numbers to deduce which cells should be filled.</li>
+            <li>A ? means you haven't unlocked that clue yet, but it will be at least 1! There are other "gimmick" clues as well.</li>
+            <li>Mark all cells that you can and you'll unlock new clues.</li>
+            <li>When you mark a cell incorrectly or mark a cell you can't possibly know yet, it will flash yellow.</li>
+            </ul>
+        </div>
+
+        <div class="controls" aria-label="Controls" style="gap:6px;">
             <div class="row">
                 <label for="rowsSelect"># Rows</label>
                 <select id="rowsSelect" aria-label="Number of rows">
                     <option value="5" selected>5</option>
-                    <!-- <option value="6">6</option> -->
-                    <!-- <option value="7">7</option> -->
                     <option value="8">8</option>
-                    <!-- <option value="9">9</option> -->
                     <option value="10">10</option>
-                    <!-- <option value="11">11</option> -->
-                    <!-- <option value="12">12</option> -->
-                    <!-- <option value="13">13</option> -->
-                    <!-- <option value="14">14</option> -->
                     <option value="15">15</option>
+                    <option value="20">20</option>
                 </select>
             </div>
             <div class="row">
                 <label for="colsSelect"># Columns</label>
                 <select id="colsSelect" aria-label="Number of columns">
                     <option value="5" selected>5</option>
-                    <!-- <option value="6">6</option> -->
-                    <!-- <option value="7">7</option> -->
                     <option value="8">8</option>
-                    <!-- <option value="9">9</option> -->
                     <option value="10">10</option>
-                    <!-- <option value="11">11</option> -->
-                    <!-- <option value="12">12</option> -->
-                    <!-- <option value="13">13</option> -->
-                    <!-- <option value="14">14</option> -->
                     <option value="15">15</option>
+                    <option value="20">20</option>
                 </select>
             </div>
 
@@ -225,13 +227,13 @@
                     <button id="btnRandomUncleared" type="button" >Random unsolved</button>
                 </div>
 
-                <div class="action-row">
+                <div class="action-row" style="display:none">
                     <button id="btnRandom" type="button">Play random puzzle</button>
                 </div>
-
+                
                 <div class="action-row">
                     <div class="play-row">
-                        <button id="btnPlaySpecific" type="button">Play specific puzzle:</button>
+                        <button id="btnPlaySpecific" type="button">Play puzzle:</button>
                         <select id="puzzleNumber" aria-label="Puzzle number"></select>
                     </div>
                 </div>
@@ -242,12 +244,12 @@
     <script>
         // populate numbers 1..100
         const numSelect = document.getElementById('puzzleNumber');
-        for(let i=1;i<=100;i++){
-            const o = document.createElement('option');
-            o.value = i;
-            o.textContent = i;
-            numSelect.appendChild(o);
-        }
+        // for(let i=1;i<=100;i++){
+        //     const o = document.createElement('option');
+        //     o.value = i;
+        //     o.textContent = `#${i}`;
+        //     numSelect.appendChild(o);
+        // }
         // quick access IDs for later hooking
         window.SoloCollectionControls = {
             rows: document.getElementById('rowsSelect'),
@@ -266,7 +268,7 @@
             for(let i=1;i<=count;i++){
                 const o = document.createElement('option');
                 o.value = i;
-                o.textContent = i;
+                o.textContent = `#${i}`;
                 numSelect.appendChild(o);
             }
         }

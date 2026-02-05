@@ -423,7 +423,6 @@ function startEverything(puzzle) {
             if(r<0||r>=ROWS||c<0||c>=COLS) return;
             if(r === lastCellSetR && c === lastCellSetC){
                 if(action === lastCellSetV){
-                    // console.log('skipping setCellState due to repeat', r, c, action);
                     return;
                 }
             }
@@ -443,7 +442,7 @@ function startEverything(puzzle) {
             
             if (action == 'white' || action == 'black'){
                 console.log('checking unlock for', nclues, window.unlock_keys);
-                if (sol[1] > window.unlock_keys[Math.min(nclues+1, window.unlock_keys.length - 1)]){
+                if (sol[1] > window.unlock_keys[Math.min(nclues, window.unlock_keys.length - 1)]){
                     action = 'error';
                 }
             }
@@ -603,10 +602,9 @@ function startEverything(puzzle) {
                     window.findAndDetermineChecks(highScore);
                     
                     if(highScore === window.unlock_keys[window.unlock_keys.length - 1]){
-                        // if(COLS*ROWS > 64){
-                            showRoss();
-                        // }
+                        showRoss();
                         window.sendGoal();
+                        wonGameSave();
                     }
                 }
             }
@@ -629,6 +627,16 @@ function startEverything(puzzle) {
         checkAndUpdate(true);
     });
     window.checkAndUpdate = checkAndUpdate;
+
+    function wonGameSave(){
+        if(window.solo){
+            const completed = JSON.parse(window.localStorage.getItem('completed_solo_puzzles')) || [];
+            if (!completed.includes(window.soloParam)) {
+                completed.push(window.soloParam);
+            }
+            window.localStorage.setItem('completed_solo_puzzles', JSON.stringify(completed));     
+        }
+    }
 
     function showRoss(){
         // thanks palex
@@ -750,6 +758,7 @@ function startEverything(puzzle) {
         try{ ev.currentTarget.releasePointerCapture(ev.pointerId);}catch(e){}
         drawing = false;
         activePointerId = null;
+        lastCellSetV = -1;
     }
 
     /* Global pointermove for dragging across cells */

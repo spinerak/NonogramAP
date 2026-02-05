@@ -204,7 +204,12 @@ function startAP(puzzle_dict){
         console.log("AP World Version: ", apworld);
         if(apworld == "0.0.3"){
             alert("A new apworld is out. You will be redirected to an older version of the game that is compatible.");
-            window.location.href = "google.nl";
+            window.location.href = "https://nonogram.netlify.app/";
+            return;
+        }
+        if(apworld == "0.1.0" || apworld == "0.1.1"){
+            alert("A new apworld is out. You will be redirected to an older version of the game that is compatible.");
+            window.location.href = "https://nonograhmm011.netlify.app/";
             return;
         }
 
@@ -313,10 +318,10 @@ if(getUrlParameter('solo')){
     let filename = "";
     let puzzleNum = null;
 
-    const soloParam = getUrlParameter('solo'); // e.g. "5_5_0" or "5_5_0_3"
-    const parts = soloParam ? soloParam.split('_').filter(p => p.length > 0) : [];
+    window.soloParam = getUrlParameter('solo'); // e.g. "5_5_0" or "5_5_0_3"
+    const parts = window.soloParam ? window.soloParam.split('_').filter(p => p.length > 0) : [];
 
-    filename = `solo_puzzles/P_${soloParam}.txt`;
+    filename = `solo_puzzles/P_${window.soloParam}.txt`;
 
     fetch(filename)
       .then(res => {

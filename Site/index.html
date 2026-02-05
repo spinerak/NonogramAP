@@ -412,19 +412,27 @@ document.getElementById('fullScreen').addEventListener('click', (e) => {
 
         <br>
         <div>
-            <label for="hostport" class="login-label">Host and Port</label>
-            <input type="text" id="hostport" name="hostport" class="login-input" placeholder="Example: archipelago.gg:38281">
-            <label for="name" class="login-label">Player Name</label>
-            <input type="text" id="name" name="name" class="login-input"
-                 placeholder="Example: Yachty">
-            <label for="name" class="login-label">Password</label>
-            <input type="password" id="password" name="password" class="login-input" value="" placeholder="Leave blank if no password">
-            <input type="submit" value="Login" id="loginbutton" class="login-submit">
-            <label id="error-label" class="login-label" style="color: red;"></label>
+            
+
             <fieldset>
                 <legend style="padding:0 6px;font-weight:bold;">Play solo:</legend>
                 <div style="display:flex;gap:8px;">
-                    <button type="button" id="soloPlay" class="login-submit" onclick="location.href='solo_collection.html';" title="Play solo">Solo play</button>
+                    <button type="button" id="soloPlay" class="login-submit" onclick="location.href='solo_collection.html';" title="Play solo" style="background-color: rgb(53, 163, 163);">Solo play</button>
+                </div>
+            </fieldset>
+            <br>
+            <fieldset>
+                <legend style="padding:0 6px;font-weight:bold;">Archipelago</legend>
+                <div>
+                    <label for="hostport" class="login-label">Host and Port</label>
+                    <input type="text" id="hostport" name="hostport" class="login-input" placeholder="Example: archipelago.gg:38281">
+                    <label for="name" class="login-label">Player Name</label>
+                    <input type="text" id="name" name="name" class="login-input"
+                        placeholder="Example: Yachty">
+                    <label for="name" class="login-label">Password</label>
+                    <input type="password" id="password" name="password" class="login-input" value="" placeholder="Leave blank if no password">
+                    <input type="submit" value="Login" id="loginbutton" class="login-submit">
+                    <label id="error-label" class="login-label" style="color: red;"></label>
                 </div>
             </fieldset>
         </div>
