@@ -225,6 +225,12 @@ function startAP(puzzle_dict){
         console.log(results);
         window.gotSaveData(results[`NNH_${window.slot}`] || null);
 
+
+        // await client.storage.notify(keys, (key, value, oldValue) => {
+        //     console.log("notify", key, value, oldValue);
+        //     window.gotSaveData( value);
+        // });
+
     };
 
     const disconnectedListener = (packet) => {
