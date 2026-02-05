@@ -290,11 +290,6 @@ function startEverything(puzzle) {
         el.classList.toggle('cross', state===0.5);
         el.classList.toggle('cross2', state===0.6);
         el.classList.toggle('error', state===1000);
-        el.classList.toggle('error2', state===999);
-        el.classList.toggle('error3', state===998);
-        el.classList.toggle('error4', state===997);
-        el.classList.toggle('error5', state===996);
-        el.classList.toggle('error6', state===995);
     }
 
 
@@ -334,7 +329,6 @@ function startEverything(puzzle) {
             if(leftRevealed[rowIndex][idx] && itemIndex == idx){
                 n.textContent = value;
                 n.title = `Row ${rowIndex+1} clue ${value}`;
-                n.classList.add('new');
                 if(isnew) n.classList.add('new');
             }
         });
@@ -487,21 +481,11 @@ function startEverything(puzzle) {
             if(action === 'error') {
                 newState = 1000;
                 ignoreInputs = true;
-                setTimeout(()=>{setCellState(r,c,'error2', true);}, 100);
-                setTimeout(()=>{setCellState(r,c,'error3', true);}, 300);
-                setTimeout(()=>{setCellState(r,c,'error4', true);}, 600);
-                setTimeout(()=>{setCellState(r,c,'error5', true);}, 1000);
-                setTimeout(()=>{setCellState(r,c,'error6', true);}, 1500);
                 setTimeout(()=>{
                     ignoreInputs = false;
                     setCellState(r,c,'erase', true);
                 }, 2000);
             }
-            if(action === 'error2') newState = 999;
-            if(action === 'error3') newState = 998;
-            if(action === 'error4') newState = 997;
-            if(action === 'error5') newState = 996;
-            if(action === 'error6') newState = 995;
         }      
         if(prev === newState) return;
         cells[r][c] = newState;
