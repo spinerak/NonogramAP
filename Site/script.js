@@ -496,15 +496,24 @@ function startEverything(puzzle) {
             applyCellClass(cellEl, newState);
         }
 
-        // update correct count if solution present
-        checkAndUpdate();
+        if(!force){
+            // update correct count if solution present
+            checkAndUpdate();
+        }
     }
 
+    window.ncorrect_server = 10000;
     function gotSaveData(savedata){
-        if(!savedata) return;
+        console.log('gotSaveData', savedata);
+        if(!savedata || savedata === 'null'){
+            console.log('No save data found, starting fresh');
+            window.ncorrect_server = 0;
+            return;
+        }
+        window.ncorrect_server = savedata[0];
         for(let r=0;r<ROWS;r++){
             for(let c=0;c<COLS;c++){
-                const st = savedata[r][c];
+                const st = savedata[1][r][c];
                 if(st == 1){
                     // black
                     setCellState(r,c, 'black', true);

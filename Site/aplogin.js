@@ -226,10 +226,10 @@ function startAP(puzzle_dict){
         window.gotSaveData(results[`NNH_${window.slot}`] || null);
 
 
-        // await client.storage.notify(keys, (key, value, oldValue) => {
-        //     console.log("notify", key, value, oldValue);
-        //     window.gotSaveData( value);
-        // });
+        await client.storage.notify(keys, (key, value, oldValue) => {
+            console.log("notify", key, value, oldValue);
+            window.gotSaveData( value);
+        });
 
     };
 
@@ -291,22 +291,32 @@ function startAP(puzzle_dict){
     }
 
     function saveBoard(puzzle){
+        console.log("Saving board to AP storage maybe...", puzzle);
         if(window.is_connected){
             if(window.solo){
                 return;
             }
             let puzzle2 = puzzle;
+            let nfilled = 0;
             for (let i = 0; i < puzzle2.length; i++){
                 for (let j = 0; j < puzzle2[i].length; j++){
                     if(puzzle2[i][j] == 0.5 || puzzle2[i][j] == 0.6){
                         puzzle2[i][j] = 0;
                     }
+                    if (puzzle2[i][j] == 1 || puzzle2[i][j] == -1){
+                        nfilled += 1;
+                    }
+
                 }
             }
-            const key_name = `NNH_${window.slot}`;
-            const value = puzzle2;
-            client.storage.prepare(key_name, 0).replace(value).commit();
-            console.log("Saved board to AP storage.");
+            console.log("Number of filled cells:", nfilled, "Previous saved filled cells:", window.nfilled_server);
+            if(nfilled > window.ncorrect_server){
+                const key_name = `NNH_${window.slot}`;
+                const value = puzzle2;
+                client.storage.prepare(key_name, 0).replace([nfilled,value]).commit();
+                console.log("Saved board to AP storage.");
+                window.ncorrect_server = nfilled;
+            }
         }
     }
 
