@@ -213,6 +213,13 @@ function startAP(puzzle_dict){
             return;
         }
 
+        const haveclues = packet.slot_data.enables_nonograhmm_hints;
+        console.log("Have clues?", haveclues);
+        if(haveclues === 0){
+            console.log("Clues are disabled for this world, hiding clue related UI...");
+            document.getElementById('modeTip').style.display = "none";      
+        }
+
         document.getElementById('labelMode').textContent = "AP";
         
         window.checked_locations = packet.checked_locations || [];
