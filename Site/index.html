@@ -7,56 +7,442 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
 <link rel="stylesheet" href="./style.css">
 
+<style>
+  :root{
+      --bg:#0b0f12;
+      --panel:#0f1518;
+      --muted:#9aa9b2;
+      --accent:#7ce3a7;
+
+      --cols: 10; /* overridden by JS */
+      --rows: 10; /* overridden by JS */
+      --left-clue-width:64px; /* overridden by JS */
+
+      --cell-size:1px;
+      --gap: calc(var(--cell-size) * 0.1);
+      --clue-font: calc(var(--cell-size) * 0.6);
+      --five-cell-border: calc(var(--cell-size) * 0.05);
+  }
+
+  html,body{
+      margin:0;
+      padding:0;
+      height:100%;
+      font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background:linear-gradient(180deg,#041018 0%, #071014 100%);
+      color:var(--muted);
+  }
+
+  /* Layout: left bar (5%), right bar (5%), main game fills rest */
+  body {
+      display:flex;
+      flex-direction:row;
+      align-items:stretch;
+      gap:0;
+      height:100vh;
+      overflow:hidden;
+  }
+
+  /* Left bar: two big vertical buttons (black / white) */
+  .left-bar {
+      width:10%;
+      background:#0c1114;
+      display:none;
+      flex-direction:column;
+      align-items:stretch;
+      height:95vh;
+      box-shadow: inset -1px 0 0 rgba(255,255,255,0.02);
+  }
+  .left-bar button {
+      flex:1;
+      border:none;
+      margin:0;
+      padding:0;
+      color:var(--muted);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-bottom:1px solid rgba(255,255,255,0.02);
+      user-select:none;
+      background: rgba(255, 255, 255, 0.151);
+      font-size: calc(min(5vw, 5vh));
+  }
+  .left-bar button.seld {
+    background: rgba(255, 255, 255, 0.326);
+  }
+
+  /* Right-side narrow options bar */
+  .right-bar {
+      width:0%;
+      background:#0f1518;
+      display:none;
+      flex-direction:column;
+      align-items:stretch;
+      height:95vh;
+      box-shadow: inset 1px 0 0 rgba(255,255,255,0.02);
+  }
+  .right-bar button {
+      flex:1;
+      border:none;
+      margin:0;
+      padding:6px;
+      color:var(--muted);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-bottom:1px solid rgba(255,255,255,0.02);
+      user-select:none;
+      background: rgba(255, 255, 255, 0);
+      font-size: calc(min(5vw, 5vh));
+  }
+  .bottom-bar {
+      position:fixed;
+      left:0;
+      bottom:0;
+      width:100%;
+      height:5vh;
+      display:none;
+      align-items:center;
+      justify-content:space-around;
+      background:var(--panel);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.02);
+      z-index:9999;
+  }
+
+  /* Main area (game) */
+  .main {
+      flex:1;
+      display:none;
+      align-items:stretch;
+      justify-content:center;
+      height:95vh;
+      overflow:auto;
+      margin:0;
+      padding:0;
+
+  }
+
+  .app {
+       width: 100%;
+  }
+
+  .card {
+      box-sizing: border-box;
+      flex: 1 1 auto;
+      min-width: 0;
+      min-height: 0;
+      align-self: stretch;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.02));
+      border-radius: 12px;
+      padding: 8px;
+      box-shadow: 0 6px 30px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+      display: flex;
+      flex-direction: row;
+      gap: 2px;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      overflow: auto;
+  }
+
+  .controls {
+      display: none; /* hide old controls - using side bars instead */
+  }
+
+.board-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    overflow: visible;
+    width: 100%;
+    height: 100%;
+}
+
+#boardGrid {
+    display: grid;
+    gap: calc(var(--gap));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.186));
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.03);
+    touch-action: none;
+    width: auto;
+    overflow: visible;
+    cursor: crosshair;
+    margin: 0 auto;
+    padding: 3px;
+}
+
+  .cell {
+      width: var(--cell-size);
+      height: var(--cell-size);
+      background: rgba(255, 255, 255, 0.125);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: crosshair;
+      transition: transform 0.06s ease, box-shadow 0.06s ease;
+      user-select: none;
+      box-sizing: border-box;
+  }
+
+  .clue-cell {
+    font-size: var(--clue-font);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.18s ease, transform 0.12s ease;
+    border-radius: 6px;
+    color: rgb(255, 255, 255);
+    background: linear-gradient(180deg,#3c3c3c,#141414);
+    box-sizing: border-box;
+    outline: calc(var(--cell-size) * 0.02) solid rgba(255, 255, 255, 0.401);
+    outline-offset: 0px;
+  }
+  .cell.filled{
+    background:linear-gradient(180deg,#3c3c3c,#141414);
+    /* box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 3px 6px rgba(0,0,0,0.6); */
+  }
+  .cell.marked{
+      background:linear-gradient(180deg,#cccccc,#6f6f6f);
+      /* box-shadow: inset 0 1px 0 rgba(207,207,207,0.02), 0 3px 6px rgba(207,207,207,0.6); */
+  }
+
+.cell.error {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Create the cross using ::before and ::after */
+.cell.error::before,
+.cell.error::after {
+  content: '';
+  position: absolute;
+  background: linear-gradient(to bottom, #ffcc00, #ff6600, #ff0000);
+  width: 0;
+  height: calc(var(--cell-size) * 0.3); /* Thickness of the cross lines */
+  top: 50%;
+  left: 50%;
+}
+
+/* First line of the cross (diagonal or horizontal/vertical) */
+.cell.error::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+  animation: expandCross 2.2s ease-out forwards;
+}
+
+/* Second line of the cross */
+.cell.error::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+  animation: expandCross 2.2s ease-out forwards;
+}
+
+@keyframes expandCross {
+  0% {
+    width: 0;
+    opacity: 1;
+  }
+  100% {
+    width: 200%; /* Expand beyond the cell */
+    opacity: 0;
+  }
+}
+
+
+
+
+  .cell.tip-next{
+      outline: 2px solid #30a34f;
+      outline-offset: 2px;
+  }
+  .cell.tip-wrong{
+      outline: 2px solid #e03e2f;
+      outline-offset: 2px;
+  }
+  .cell.cross::after {
+      content: "?"; /* Unicode for "x" */
+      font-size: calc(var(--clue-font) * 0.8);
+      line-height: 1;
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+  }
+  .cell.cross2::after {
+      content: "??"; /* Unicode for "x" */
+      font-size: calc(var(--clue-font) * 0.8);
+      line-height: 1;
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+  }
+
+  /* clue cells inside grid */
+  .clue-cell {
+      font-size: var(--clue-font);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity 0.18s ease, transform 0.12s ease;
+      border-radius: 6px;
+      color: rgb(255, 255, 255);
+      background: linear-gradient(180deg,#3c3c3c,#141414);
+      box-sizing: border-box; /* Add this line */
+  }
+  /* top clues look like small text on transparent bg */
+  .clue-cell.top{ width:var(--cell-size); height:var(--cell-size);}
+  /* left clues now use the same column sizing as top/cell columns so gaps match */
+  .clue-cell.left{ width:var(--cell-size); height:var(--cell-size); }
+  /* clicked/done */
+  .clue-cell.done{ opacity:.36; transform:translateY(1px) scale(.98); }
+  .clue-cell.new{
+          /* background: linear-gradient(180deg,#3c3c3c,#054d02); */
+          color:rgb(137, 255, 137)
+  }
+
+
+  /* Major gridline styles (every 5 cells, first after clue area) */
+  .cell.major-v, .clue-cell.major-v { border-right: var(--five-cell-border) solid #919191; }
+  .cell.major-h, .clue-cell.major-h { border-bottom: var(--five-cell-border)  solid #919191; }
+
+  /* keep older helper styles in place (login etc.) */
+.login-container {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+}
+.login-form {
+    background-color: #1f1f1f;
+    border-radius: 5px;
+    padding: 20px;
+    width: 300px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+  .login-heading { margin-bottom: 20px; color: #ffffff; font-size: 30px; }
+  .login-label { display: block; color: #ffffff; margin-bottom: 5px; }
+  .login-input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background-color: #333333; color: #ffffff; }
+  .login-submit { width: 100%; background-color: #4caf50; color: white; padding: 10px 0; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+  .login-submit:hover { background-color: #45a049; }
+  .login-description { margin: 1px; color: #ffffff; }
+
+  .legend {
+      color: #ffffff;
+      font-size: calc(min(3vh, 3vw));
+  }
+</style>
 
 <title>Nonograhmm</title>
 
 </head>
 <body>
 
-<div class="app" id="app">
-    <div class="card" id="appCard">
-        <div class="controls">
-            <div>
-              <div class="title">Nonograhmm</div>
+<!-- Left vertical bar: Black / White -->
+<div class="left-bar" id="leftBar">
+  <button id="modeFill" class="black" title="Fill black">⚫</button>
+  <button id="modeMark" class="white" title="Mark white">⚪</button>
+  <button id="modeMouse" class="mouse" title="Mouse mode">🖱️</button>
+  <button id="modeCross" title="Mark">✏️</button>
+  <button id="switchUI" title="Switch UI">↔️</button>
+  <button id="fullScreen" title="Full Screen">⛶</button>
+  <button id="modeTip" title="Hint">💡</button>
+</div>
 
-              <fieldset>
-                <legend style="font-weight:bold;">Controls:</legend>
-                  <div class="mode-row" role="group" aria-label="modes">
-                    <div style="display:grid;grid-template-columns:repeat(3,auto);gap:8px;justify-items:center;">
-                      <button id="modeMouse" class="btn active" title="Mouse mode">🖱️</button>
-                        <button id="modeFill" class="btn" title="Black cells (filled)">⚫</button>
-                        <button id="modeMark" class="btn" title="White cells (marked)">⚪</button>
-                        <button id="modeErase" class="btn" title="Erase cells (clear)">🧽</button>
-                        <button id="modeCross" class="btn" title="Cross cells (marked)">✏️</button>
-                        <button id="modeTip" class="btn" title="Tip">💡</button>
+<!-- Main game area -->
+<div class="main" id="mainArea">
+  <div class="app" id="app">
+      <div class="card" id="appCard">
+          <div class="board-wrap" id="boardWrap">
+              <div id="boardGrid" aria-hidden="false"></div>
+          </div>
+      </div>
+  </div>
+</div>
 
-                    </div>
-                  </div>
-              </fieldset>
+<!-- Right vertical options bar -->
+<div class="right-bar" id="rightBar">
+</div>
 
+<script>
+(function(){
+  const switchBtn = document.getElementById('switchUI');
+  const leftBar = document.getElementById('leftBar');
+  const rightBar = document.getElementById('rightBar');
+  const main = document.getElementById('mainArea');
+  const bottomBar = document.querySelector('.bottom-bar');
+  let swapped = false;
 
-              <div> Timer: <span id="timerLabel">00:00</span></div>
+  function doSwap() {
+    const parent = leftBar.parentNode;
+    if (!swapped) {
+      parent.insertBefore(rightBar, leftBar);
+      parent.insertBefore(main, leftBar);
+      swapped = true;
+    } else {
+      parent.insertBefore(leftBar, rightBar);
+      parent.insertBefore(main, rightBar);
+      swapped = false;
+    }
+  }
 
-              <div style="display:flex;gap:8px;">
-                  <button id="resetBtn" class="btn reset">Reset</button>
-                  <button id="helpBtn" class="btn reset">Help</button>
-              </div>
-            </div>
-            
+  if (switchBtn) {
+    switchBtn.addEventListener('click', (e) => { e.preventDefault(); doSwap(); });
+  }
 
-            <div class="legend">Filled in: <span id="filledCount">—</span></div>
-            <div class="legend">Next unlock: <span id="nextUnlockCount">—</span></div>
-            <div class="legend">In logic: <span id="inLogicCount">—</span></div>
-            <div class="legend">Puzzle: <span id="labelMode"></span></div>
+})();
 
-        </div>
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) { 
+            document.documentElement.webkitRequestFullscreen(); // Safari
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) { 
+            document.webkitExitFullscreen(); // Safari
+        }
+    }
+}
+document.getElementById('fullScreen').addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleFullscreen();
+});
+</script>
 
-        <div class="board-wrap" id = "boardWrap" >
-            <!-- unified board grid: clues are rendered as grid items so they align perfectly with cells -->
-            <div id="boardGrid" aria-hidden="false"></div>
-        </div>
-
-    </div>
+<div class="bottom-bar" id="bottomBar">
+  <div class="legend">Timer: <span id="timerLabel">00:00</span></div>
+  <div class="legend">Filled in: <span id="filledCount">—</span></div>
+  <div class="legend">Next unlock: <span id="nextUnlockCount">—</span></div>
+  <div class="legend">In logic: <span id="inLogicCount">—</span></div>
+  <div class="legend">Puzzle: <span id="labelMode"></span></div>
 </div>
 
 <!-- Login screen -->
@@ -66,22 +452,27 @@
 
         <br>
         <div>
-            <label for="hostport" class="login-label">Host and Port</label>
-            <input type="text" id="hostport" name="hostport" class="login-input" placeholder="Example: archipelago.gg:38281">
-            <label for="name" class="login-label">Player Name</label>
-            <input type="text" id="name" name="name" class="login-input"
-                 placeholder="Example: Yachty">
-            <label for="name" class="login-label">Password</label>
-            <input type="password" id="password" name="password" class="login-input" value="" placeholder="Leave blank if no password">
-            <input type="submit" value="Login" id="loginbutton" class="login-submit">
-            <label id="error-label" class="login-label" style="color: red;"></label>
+            
+
             <fieldset>
                 <legend style="padding:0 6px;font-weight:bold;">Play solo:</legend>
                 <div style="display:flex;gap:8px;">
-                    <button type="button" id="offline5" class="login-submit" style="background-color:#7a3434;display:none;">5x5</button>
-                    <button type="button" id="offline10" class="login-submit" style="background-color:#7a3434;display:none;">10x10</button>
-                    <button type="button" id="offline15" class="login-submit" style="background-color:#7a3434;display:none;">15x15</button>
-                    <a href="https://nonogram-ap.netlify.app/" style="color:#ffffff;text-decoration:underline;">Not done yet, so click here to go back to previous version.</a>
+                    <button type="button" id="soloPlay" class="login-submit" onclick="location.href='solo_collection.html';" title="Play solo" style="background-color: rgb(53, 163, 163);">Solo play</button>
+                </div>
+            </fieldset>
+            <br>
+            <fieldset>
+                <legend style="padding:0 6px;font-weight:bold;">Archipelago</legend>
+                <div>
+                    <label for="hostport" class="login-label">Host and Port</label>
+                    <input type="text" id="hostport" name="hostport" class="login-input" placeholder="Example: archipelago.gg:38281">
+                    <label for="name" class="login-label">Player Name</label>
+                    <input type="text" id="name" name="name" class="login-input"
+                        placeholder="Example: Yachty">
+                    <label for="name" class="login-label">Password</label>
+                    <input type="password" id="password" name="password" class="login-input" value="" placeholder="Leave blank if no password">
+                    <input type="submit" value="Login" id="loginbutton" class="login-submit">
+                    <label id="error-label" class="login-label" style="color: red;"></label>
                 </div>
             </fieldset>
         </div>
@@ -91,105 +482,8 @@
       Ringing bell - happy.wav by domrodrig -- https://freesound.org/s/116779/ -- License: Creative Commons 0
     </div>
     </div>
-
 </div>
 
-<div class="popup-overlay" id="simple-popup" role="dialog" aria-modal="true" aria-labelledby="popup-title">
-  <div class="popup" role="document">
-    <h3 id="popup-title">How clues and controls work</h3>
-    <ul>
-      <li>You unlock clues the more squares you marked (black and white) correctly (new clues are shown in green).</li>
-      <li>Controls: left-click and right-click. Middle-click to remove. Or use the modes top-left.</li>
-      <li>Some clues are hidden. A <code>?</code> means there will be a clue there at some point, and it will be a number that is at least 1. Use this to logically finish the game.</li>
-      <li>You don't have to guess in this puzzle, so please don't :)</li>
-      <li>You can solve all puzzles by just looking at each row and column individually.</li>
-      <li>Stuck? Check the console (F12) and there is a link to a spoiler log near the top that shows you the steps.</li>
-    </ul>
-  </div>
-</div>
-
-<!-- Simple pop-up modal -->
-<style>
-  .popup-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-  }
-  .popup {
-    background: #111;
-    color: #fff;
-    padding: 20px;
-    max-width: 420px;
-    width: calc(100% - 40px);
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    font-family: Arial, Helvetica, sans-serif;
-    text-align: left;
-    text-transform: none;
-  }
-  .popup h3 { margin: 0 0 8px 0; font-size: 1.25rem; text-transform: none;}
-  .popup p { margin: 0 0 12px 0; font-size: 0.95rem; line-height: 1.35; text-transform: none;}
-  .popup .actions { text-align: right; text-transform: none;}
-  .popup .btn {
-    background: #4a6bff;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    text-transform: none;
-  }
-  .popup .btn.secondary {
-    background: transparent;
-    color: #ddd;
-    margin-right: 8px;
-    border: 1px solid rgba(255,255,255,0.06);
-  }
-</style>
-
-<script>
-      (function(){
-    const overlay = document.getElementById('simple-popup');
-    const closeBtn = document.getElementById('popup-close');
-    const gotItBtn = document.getElementById('popup-gotit');
-
-    function reallyShowPopup() {
-      overlay.style.display = 'flex';
-    }
-    function hidePopup() {
-      overlay.style.display = 'none';
-      // never show the popup again
-      localStorage.setItem('popup-shown', 'true');
-    }
-
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) hidePopup();
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && overlay.style.display === 'flex') hidePopup();
-    });
-
-    const helpBtn = document.getElementById('helpBtn');
-    const STORAGE_KEY = 'popup-shown';
-
-    if (helpBtn) {
-        helpBtn.addEventListener('click', () => {
-            localStorage.setItem(STORAGE_KEY, 'true');
-            document.getElementById('helpBtn').style.backgroundColor = 'rgba(255,255,255,0)';
-            reallyShowPopup();
-        });
-
-        if (!localStorage.getItem(STORAGE_KEY)) {
-            document.getElementById('helpBtn').style.backgroundColor = '#ffffff';
-        }
-    }
-  })();
-</script>
 
 <!-- Main application script -->
 
