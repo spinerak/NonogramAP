@@ -584,6 +584,7 @@ function startEverything(puzzle) {
 
         if(showTip){
             if(loc_lowest_notknown === null) return;
+            if(lowest_incorrect > window.unlock_keys[Math.min(nclues, window.unlock_keys.length - 1)]) return;
             const [r,c,s] = loc_lowest_notknown;
             if (s == 0){
                 for (let rr=0;rr<ROWS;rr++){
