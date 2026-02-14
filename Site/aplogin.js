@@ -95,12 +95,6 @@ function startAP(puzzle_dict){
                 gotClue();
             }
 
-            function parsePythonDict(python_dict) {
-                // This is a very naive parser and assumes the input is well-formed
-                const jsonString = python_dict;
-                return JSON.parse(jsonString);
-            }
-
             console.log("Parsed offline puzzle python dict:", puzzle_dict);
             startWithPuzzle(puzzle_dict);
             
@@ -120,6 +114,7 @@ function startAP(puzzle_dict){
         client.socket.on("connected", connectedListener);
         client.socket.on("disconnected", disconnectedListener);
         client.room.on("roomUpdate", roomupdateListener);
+        client.messages.on("message", jsonListener);
         
         
         client
@@ -212,6 +207,13 @@ function startAP(puzzle_dict){
             window.location.href = "https://nonograhmm011.netlify.app/";
             return;
         }
+        if(apworld == "0.2.0" || apworld == "0.2.1" || apworld == "0.2.2" || apworld == "0.2.3"){
+            if(!localStorage.getItem("referredFrom02")){
+                alert("A new apworld is out with more yaml options to tweak your game. But you can play this version here as well and you will see this message only once.");
+                localStorage.setItem("referredFrom02", true);
+            }
+
+        }
 
         const haveclues = packet.slot_data.enables_nonograhmm_hints;
         console.log("Have clues?", haveclues);
@@ -220,9 +222,16 @@ function startAP(puzzle_dict){
             document.getElementById('modeTip').style.display = "none";      
         }
 
+        
+        window.showallclues = false;
+        if (packet.slot_data.show_all_clues !== undefined) {
+            window.showallclues = packet.slot_data.show_all_clues;
+        }
+
         document.getElementById('labelMode').textContent = "AP";
         
         window.checked_locations = packet.checked_locations || [];
+        window.missing_locations = packet.missing_locations || [];
         window.startEverything(puzzle);
 
         window.is_connected = true;
@@ -254,6 +263,9 @@ function startAP(puzzle_dict){
             if(!window.checked_locations.includes(o)){
                 window.checked_locations.push(o);
             }
+            if(window.missing_locations.includes(o)){
+                window.missing_locations.splice(window.missing_locations.indexOf(o), 1);
+            }
             //sort:
             window.checked_locations.sort((a,b)=>a-b);
             console.log("Updated checked locations:", window.checked_locations);
@@ -261,11 +273,152 @@ function startAP(puzzle_dict){
         window.updateNextUnlockCount();
     };
 
+    var classaddcolor = ["rgb(6, 217, 217)",
+                        "rgb(168, 147, 228)",
+                        "rgb(98, 122, 198)",
+                        "rgb(255, 223, 0)",
+                        "rgb(211, 113, 102)",
+                        "rgb(255, 172, 28)",
+                        "rgb(155, 89, 182)",
+                        "rgb(128, 255, 128)"]
+    var classaddtext = ["...", "!!", "!", "!!!", "@#!", "!?!", "@!!", "?!@"]
+    var classadddesc = ["Item class: normal", 
+                        "Item class: progression", 
+                        "Item class: useful", 
+                        "Item class: progression, useful", 
+                        "Item class: trap", 
+                        "Item class: progression, trap", 
+                        "Item class: useful, trap", 
+                        "progression, useful, trap"]
+
+    function jsonListener(text, nodes) {
+        const messageElement = document.createElement("div");     
+
+
+        let is_relevant = false;
+        let contains_player = false;
+
+        
+        
+        console.log("Message received:", text, nodes);
+        for (const node of nodes) {
+            const nodeElement = document.createElement("span");
+            nodeElement.innerText = node.text;
+
+            switch (node.type) {
+                case "entrance":
+                    nodeElement.style.color = "#6495ED";
+                    break;
+
+                case "location":
+                    nodeElement.style.color = "#00FF7F";
+                    break;
+
+                case "color":
+                    // not really correct, but technically the only color nodes the server returns is "green" or "red"
+                    // so it's fine enough for an example.
+                    nodeElement.style.color = node.color;
+                    break;
+
+                case "player":
+                    contains_player = true;
+                    nodeElement.style.fontWeight = "bold";
+                    if (node.player.slot === client.players.self.slot) {
+                        // It's us!
+                        nodeElement.style.color = "#EE00EE";
+                        is_relevant = true;
+                    } else {
+                        // It's them!
+                        nodeElement.style.color = "#FAFAD2";
+                    }
+                    nodeElement.innerText = node.player.alias;
+                    nodeElement.title = "Game: " + node.player.game;
+                    break;
+
+                case "item": {
+                    nodeElement.style.fontWeight = "bold";
+                    let typenumber = node.item.progression + 2 * node.item.useful + 4 * node.item.trap
+                    nodeElement.style.color = classaddcolor[typenumber];
+                    nodeElement.title = classadddesc[typenumber]; 
+                }
+
+                // no special coloring needed
+                case "text":
+                default:
+                    break;
+            }
+            messageElement.appendChild(nodeElement);
+        }
+
+
+        if(is_relevant){
+            window.queue = window.queue || [];
+            window.queue.push(messageElement);
+            if(window.queue.length === 1){
+                showLogMessage();
+            }
+
+            
+        }
+    }
+
+    function showLogMessage(){
+        if(!window.queue || window.queue.length === 0){
+            let container = document.getElementById('temporaryPopup');
+            if (container && container.childElementCount === 0 && container.parentElement) container.parentElement.removeChild(container);
+            return;
+        }
+        let messageElement = window.queue.shift();
+        let container = document.getElementById('temporaryPopup');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'temporaryPopup';
+            Object.assign(container.style, {
+                position: 'fixed',
+                bottom: '0px',
+                left: '0%',
+                transform: 'translateX(0%)',
+                zIndex: '9999',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                pointerEvents: 'none'
+            });
+            document.body.appendChild(container);
+        }
+
+        Object.assign(messageElement.style, {
+            background: 'rgba(0,0,0,0.85)',
+            color: '#fff',
+            padding: '6px 2px',
+            marginTop: '0px',
+            borderRadius: '6px',
+            maxWidth: '80vw',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+            pointerEvents: 'auto',
+            fontSize: 'calc(min(3vh, 3vw))'
+        });
+
+        container.appendChild(messageElement);
+
+        setTimeout(() => {
+            if (messageElement.parentElement === container) container.removeChild(messageElement);
+            if (window.queue.length > 0) {
+                showLogMessage();
+            } else {
+                if (container.childElementCount === 0 && container.parentElement) container.parentElement.removeChild(container);
+            }
+        }, 5000 / Math.max(1, window.queue.length));
+    }
+
     function findAndDetermineChecks(total){
         console.log("Finding and determining checks for total:", total);
         sendCheck(67 + total);
         if(!window.checked_locations.includes(67 + total)){
             window.checked_locations.push(67 + total);
+        }
+        if (window.missing_locations.includes(67 + total)){
+            window.missing_locations.splice(window.missing_locations.indexOf(67 + total), 1);
         }
         window.updateNextUnlockCount();
     }
@@ -274,6 +427,9 @@ function startAP(puzzle_dict){
     function sendCheck(key){
         if(window.is_connected){
             if(window.solo){
+                if(!window.unlock_keys.includes(key-67)){
+                    return;
+                }
                 console.log("Solo mode, pretending to check ", key);
                 gotClue();
                 const audio2 = new Audio('ding.mp3');
@@ -281,7 +437,9 @@ function startAP(puzzle_dict){
                 audio2.play();
                 return;
             }
-            client.check(parseInt(key));
+            if (window.missing_locations.includes(key)){
+                client.check(parseInt(key));
+            }
             console.log("Sent check for ", key);
         }
     }
@@ -331,7 +489,7 @@ function startAP(puzzle_dict){
     window.sendGoal = sendGoal;
     window.saveBoard = saveBoard;
 
-    console.log("0.2.0")
+    console.log("0.2.3")
     connectToServer();
 }
 

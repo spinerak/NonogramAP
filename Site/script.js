@@ -25,6 +25,10 @@ function startEverything(puzzle) {
     let COLS = topClues.length;
     let ROWS = leftClues.length;
 
+    if(window.solo){
+        window.missing_locations = [];
+    }
+
 
     let solution = puzzle['S'];
     window.unlock_order = puzzle['G'];
@@ -33,6 +37,9 @@ function startEverything(puzzle) {
         const value_to_add = k[1]
         if(!window.unlock_keys.includes(value_to_add)){
             window.unlock_keys.push(value_to_add);
+            if(window.solo){
+                window.missing_locations.push(value_to_add+67);
+            }
         }
     }
 
@@ -608,15 +615,13 @@ function startEverything(puzzle) {
                 // if highscore is one of the keys in window.unlock_order, find the how many'th that is,
                 // then call findAndDetermineChecks with that index
 
-                if(window.unlock_keys.includes(highScore)){
 
-                    window.findAndDetermineChecks(highScore);
-                    
-                    if(highScore === window.unlock_keys[window.unlock_keys.length - 1]){
-                        showRoss();
-                        window.sendGoal();
-                        wonGameSave();
-                    }
+                window.findAndDetermineChecks(highScore);
+                
+                if(highScore === window.unlock_keys[window.unlock_keys.length - 1]){
+                    showRoss();
+                    window.sendGoal();
+                    wonGameSave();
                 }
             }
             // update save data
@@ -625,7 +630,13 @@ function startEverything(puzzle) {
 
         // console.log('Correct count:', correct, 'nclues:', window.nclues, 'max', window.unlock_keys.length - 1);
         for(let i = 0; i <= window.unlock_keys.length; i++){
-            if(correct >= window.unlock_keys[Math.min(i, window.unlock_keys.length - 1)] && window.nclues > i){
+            if(
+                (
+                    window.showallclues ||
+                    correct >= window.unlock_keys[Math.min(i, window.unlock_keys.length - 1)]
+                ) 
+                && window.nclues > i
+            ){
                 // console.log('Updating nclues', window.nclues, 'to', i, 'for score', window.unlock_keys[i]);
                 applyUnlocksForScore(i);
             }
@@ -727,15 +738,18 @@ function startEverything(puzzle) {
     }
 
     function updateNextUnlockCount(){
-        console.log(window.unlock_keys, window.checked_locations);
-        const arr = window.checked_locations || [];
-        for(let i of window.unlock_keys){
-            if(i>0 && !arr.includes(i+67)){
-                nextUnlockCountEl.textContent = i;
-                return;
+        console.log(window.unlock_keys, window.checked_locations, window.missing_locations);
+        // set nextUnlockCountEl text to the minimum of window.missing_locations, minus 67. If it's empty, set to "done!"
+        if(window.missing_locations && window.missing_locations.length > 0){
+            const nextUnlock = Math.min(...window.missing_locations);
+            if(nextUnlock - 67 <= 0){
+                nextUnlockCountEl.textContent = 'done!';
+            } else {
+                nextUnlockCountEl.textContent = (nextUnlock - 67);
             }
+        } else {
+            nextUnlockCountEl.textContent = 'done!';
         }
-        nextUnlockCountEl.textContent = "done!";
     }
     window.updateNextUnlockCount = updateNextUnlockCount;
 
