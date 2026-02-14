@@ -110,11 +110,14 @@ function startAP(puzzle_dict){
 
         console.log("Connecting to server...");
         client = new Client();
-        client.items.on("itemsReceived", receiveditemsListener);
-        client.socket.on("connected", connectedListener);
-        client.socket.on("disconnected", disconnectedListener);
-        client.room.on("roomUpdate", roomupdateListener);
-        client.messages.on("message", jsonListener);
+        if(!window.addedListeners){
+            client.items.on("itemsReceived", receiveditemsListener);
+            client.socket.on("connected", connectedListener);
+            client.socket.on("disconnected", disconnectedListener);
+            client.room.on("roomUpdate", roomupdateListener);
+            client.messages.on("message", jsonListener);
+            window.addedListeners = true;
+        }
         
         
         client
@@ -133,6 +136,7 @@ function startAP(puzzle_dict){
                     txt += "\nCommon remedies: refresh room and check login info.";
                 }
                 document.getElementById('error-label').innerText = txt;
+                window.addedListeners = false;
             });
 
     }
@@ -207,12 +211,12 @@ function startAP(puzzle_dict){
             window.location.href = "https://nonograhmm011.netlify.app/";
             return;
         }
-        // if(apworld == "0.2.0" || apworld == "0.2.1" || apworld == "0.2.2" || apworld == "0.2.3"){
-        //     if(!localStorage.getItem("referredFrom02")){
-        //         alert("A new apworld is out with more yaml options to tweak your game. But you can play this version here as well and you will see this message only once.");
-        //         localStorage.setItem("referredFrom02", true);
-        //     }
-        // }
+        if(apworld == "0.2.0" || apworld == "0.2.1" || apworld == "0.2.2" || apworld == "0.2.3"){
+            if(!localStorage.getItem("referredFrom02")){
+                alert("A new apworld is out with more yaml options to tweak your game. But you can play this version here as well and you will see this message only once.");
+                localStorage.setItem("referredFrom02", true);
+            }
+        }
 
         const haveclues = packet.slot_data.enables_nonograhmm_hints;
         console.log("Have clues?", haveclues);
@@ -380,7 +384,7 @@ function startAP(puzzle_dict){
                 zIndex: '9999',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 pointerEvents: 'none'
             });
             document.body.appendChild(container);
