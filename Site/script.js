@@ -392,7 +392,7 @@ function startEverything(puzzle) {
         }else{
             // console.log('in logic update:', window.unlock_keys[nclues+1], window.unlock_keys[window.nclues]);
             if(window.unlock_keys[window.nclues] === undefined){
-                inLogicCountEl.textContent = `${window.unlock_keys[nclues+1]} now (${window.unlock_keys[window.nclues-1]} total)`;
+                inLogicCountEl.textContent = `${window.unlock_keys[nclues+1]} now (${window.unlock_keys[window.unlock_keys.length-1]} total)`;
             }else{
                 inLogicCountEl.textContent = `${window.unlock_keys[nclues+1]} now (${window.unlock_keys[window.nclues]} total)`;
             }
