@@ -217,6 +217,12 @@ function startAP(puzzle_dict){
                 localStorage.setItem("referredFrom02", true);
             }
         }
+        if(apworld == "0.3.0"){
+            if(!localStorage.getItem("referredFrom03")){
+                alert("A new apworld is out! Your version has a slight logic error and the logic thought you had one more clue than you actually have. You can send yourself one clue to fix this :p");
+                localStorage.setItem("referredFrom03", true);
+            }
+        }
 
         const haveclues = packet.slot_data.enables_nonograhmm_hints;
         console.log("Have clues?", haveclues);
